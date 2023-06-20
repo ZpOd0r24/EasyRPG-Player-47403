@@ -1,18 +1,6 @@
-Read me: [EPMP-README.md](/docs/EPMP-README.md)
+# EasyRPG Multiplayer Native
 
-
-# EasyRPG Player
-
-EasyRPG Player is a game interpreter to play RPG Maker 2000, 2003 and EasyRPG
-games. It uses the LCF parser library (liblcf) to read RPG Maker game data.
-
-EasyRPG Player is part of the EasyRPG Project. More information is
-available at the project website: https://easyrpg.org/
-
-
-## Documentation
-
-Documentation is available at the documentation wiki: https://wiki.easyrpg.org
+Add multiplayer functionality and the server in C++.
 
 
 ## Requirements
@@ -20,65 +8,33 @@ Documentation is available at the documentation wiki: https://wiki.easyrpg.org
 ### minimal / required
 
 - [liblcf] for RPG Maker data reading.
+- sockpp for TCP socket.
 - SDL2 for screen backend support.
 - Pixman for low level pixel manipulation.
 - libpng for PNG image support.
 - zlib for XYZ image support.
 - fmtlib for interal logging.
 
-### extended / recommended
+### extended / optional / recommended
 
-- FreeType2 for external font support (+ HarfBuzz for Unicode text shaping).
-- mpg123 for MP3 audio support.
-- WildMIDI for MIDI audio support using GUS patches.
-- FluidSynth for MIDI audio support using soundfonts.
-- Libvorbis / Tremor for Ogg Vorbis audio support.
-- opusfile for Opus audio support.
-- libsndfile for better WAVE audio support.
-- libxmp for tracker music support.
-- SpeexDSP or libsamplerate for proper audio resampling.
+- FreeType2 for external font support (+ HarfBuzz for Unicode text shaping)
+- mpg123 for better MP3 audio support
+- WildMIDI for better MIDI audio support
+- Libvorbis / Tremor for Ogg Vorbis audio support
+- opusfile for Opus audio support
+- libsndfile for better WAVE audio support
+- libxmp for better tracker music support
+- SpeexDSP for proper audio resampling
 
 SDL 1.2 is still supported, but deprecated.
 
 
-## Daily builds
+## Credits
 
-Up to date binaries for assorted platforms are available at our continuous
-integration service:
-
-https://ci.easyrpg.org/view/Player/
-
-
-## Source code
-
-EasyRPG Player development is hosted by GitHub, project files are available
-in this git repository:
-
-https://github.com/EasyRPG/Player
-
-Released versions are also available at our Download Archive:
-
-https://easyrpg.org/downloads/player/
-
-
-## Building
-
-See [BUILDING document].
-
-
-## Running EasyRPG Player
-
-Run the `easyrpg-player` executable from a RPG Maker 2000 or 2003 game
-project folder (same place as `RPG_RT.exe`).
-
-
-## Bug reporting
-
-Available options:
-
-* File an issue at https://github.com/EasyRPG/Player/issues
-* Open a thread at https://community.easyrpg.org/
-* Chat with us via IRC: [#easyrpg at irc.libera.chat]
+- EasyRPG developers - EasyRPG Player (https://github.com/EasyRPG/Player)
+- YNOproject - Yume Nikki Online (https://github.com/ynoproject/ynoclient)
+- CataractJustice - EasyRPG Player online fork (https://github.com/CataractJustice/ynoclient)
+- fpagliughi - Simple, modern, C++ socket library (https://github.com/fpagliughi/sockpp)
 
 
 ## License

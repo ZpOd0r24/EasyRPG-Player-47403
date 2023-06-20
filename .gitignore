@@ -113,6 +113,9 @@ __MACOSX
 /lib/liblcf/
 .buildconfig
 
+# epmp
+/lib/downloads/
+
 # Android
 *.iml
 local.properties
