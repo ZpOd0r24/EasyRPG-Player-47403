@@ -101,6 +101,10 @@
 using namespace std::chrono_literals;
 
 namespace Player {
+	bool toggle_mute_flag = false;
+	int volume_se = 0;
+	int volume_bgm = 0;
+
 	int screen_width = SCREEN_TARGET_WIDTH;
 	int screen_height = SCREEN_TARGET_HEIGHT;
 	int menu_offset_x = (screen_width - MENU_WIDTH) / 2;
@@ -281,12 +285,16 @@ void Player::MainLoop() {
 }
 
 void Player::Pause() {
+#if PAUSE_AUDIO_WHEN_FOCUS_LOST
 	Audio().BGM_Pause();
+#endif
 }
 
 void Player::Resume() {
 	Input::ResetKeys();
+#if PAUSE_AUDIO_WHEN_FOCUS_LOST
 	Audio().BGM_Resume();
+#endif
 	Game_Clock::ResetFrame(Game_Clock::now());
 }
 
@@ -303,6 +311,9 @@ void Player::UpdateInput() {
 	}
 	if (Input::IsSystemTriggered(Input::TOGGLE_ZOOM)) {
 		DisplayUi->ToggleZoom();
+	}
+	if (Input::IsSystemTriggered(Input::TOGGLE_MUTE)) {
+		Audio().ToggleMute();
 	}
 	float speed = 1.0;
 	if (Input::IsSystemPressed(Input::FAST_FORWARD)) {
