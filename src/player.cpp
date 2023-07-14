@@ -54,6 +54,7 @@
 #include "game_screen.h"
 #include "game_pictures.h"
 #include "game_system.h"
+#include "multiplayer/game_multiplayer.h"
 #include "game_variables.h"
 #include "game_strings.h"
 #include "game_targets.h"
@@ -84,6 +85,7 @@
 #include "game_clock.h"
 #include "message_overlay.h"
 #include "multiplayer/chatui.h"
+#include "multiplayer/server.h"
 
 #ifdef __ANDROID__
 #include "platform/android/android.h"
@@ -428,6 +430,8 @@ void Player::Exit() {
 	Output::Quit();
 	FileFinder::Quit();
 	DisplayUi.reset();
+	GMI().Quit();
+	Server().Stop();
 }
 
 Game_Config Player::ParseCommandLine() {

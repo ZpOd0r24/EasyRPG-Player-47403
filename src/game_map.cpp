@@ -143,7 +143,7 @@ void Game_Map::Quit() {
 	common_events.clear();
 	interpreter.reset();
 	Output::Debug("MP: map quit");
-	GMI().Quit();
+	GMI().MapQuit();
 }
 
 int Game_Map::GetMapSaveCount() {
@@ -218,7 +218,7 @@ void Game_Map::Setup(std::unique_ptr<lcf::rpg::Map> map_in) {
 
 	//multiplayer setup
 	Output::Debug("MP: map setup id={}", GetMapId());
-	GMI().Connect(GetMapId(), true);
+	GMI().SwitchRoom(GetMapId(), true);
 }
 
 void Game_Map::SetupFromSave(
@@ -296,7 +296,7 @@ void Game_Map::SetupFromSave(
 
 	//multiplayer setup
 	Output::Debug("MP: map setup from save id={}", GetMapId());
-	GMI().Connect(GetMapId());
+	GMI().SwitchRoom(GetMapId());
 }
 
 std::unique_ptr<lcf::rpg::Map> Game_Map::loadMapFile(int map_id) {
