@@ -25,6 +25,7 @@
 #include <fstream>
 #include <memory>
 #include <thread>
+#include <csignal>
 
 #ifdef _WIN32
 #  include "platform/windows/utils.h"
@@ -118,6 +119,7 @@ namespace Player {
 	bool reset_flag;
 	bool debug_flag;
 	bool hide_title_flag;
+	bool server_flag;
 	int load_game_id;
 	int party_x_position;
 	int party_y_position;
@@ -187,6 +189,9 @@ void Player::Init(std::vector<std::string> args) {
 
 	Output::Debug("CLI: {}", command_line);
 
+	if (server_flag)
+		return;
+
 	Game_Clock::logClockInfo();
 	if (rng_seed < 0) {
 		Rand::SeedRandomNumberGenerator(time(NULL));
@@ -211,6 +216,18 @@ void Player::Init(std::vector<std::string> args) {
 }
 
 void Player::Run() {
+	if (server_flag) {
+		auto signal_handler = [](int signal) {
+			Server().Stop();
+			Output::Debug("Server: signal={}", signal);
+		};
+		std::signal(SIGHUP, signal_handler);
+		std::signal(SIGINT, signal_handler);
+		std::signal(SIGTERM, signal_handler);
+		Server().Start(true);
+		return;
+	}
+
 	Instrumentation::Init("EasyRPG-Player");
 
 	Scene::Push(std::make_shared<Scene_Logo>());
@@ -440,6 +457,7 @@ Game_Config Player::ParseCommandLine() {
 	hide_title_flag = false;
 	exit_flag = false;
 	reset_flag = false;
+	server_flag = false;
 	load_game_id = -1;
 	party_x_position = -1;
 	party_y_position = -1;
@@ -642,6 +660,10 @@ Game_Config Player::ParseCommandLine() {
 		}
 		if (cp.ParseNext(arg, 0, "--no-rtp") || cp.ParseNext(arg, 0, "--disable-rtp")) {
 			no_rtp_flag = true;
+			continue;
+		}
+		if (cp.ParseNext(arg, 0, "--server")) {
+			server_flag = true;
 			continue;
 		}
 		if (cp.ParseNext(arg, 1, "--rtp-path")) {
@@ -1510,6 +1532,7 @@ Debug options:
  --test-play          Enable TestPlay (Debug) mode.
 
 Other options:
+ --server             Run dedicated server.
  -v, --version        Display program version and exit.
  -h, --help           Display this help and exit.
 
