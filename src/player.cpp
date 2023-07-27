@@ -225,7 +225,6 @@ void Player::Run() {
 			Server().Stop();
 			Output::Debug("Server: signal={}", signal);
 		};
-		std::signal(SIGHUP, signal_handler);
 		std::signal(SIGINT, signal_handler);
 		std::signal(SIGTERM, signal_handler);
 		Server().Start(true);
