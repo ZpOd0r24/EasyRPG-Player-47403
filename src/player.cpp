@@ -85,6 +85,7 @@
 #include "baseui.h"
 #include "game_clock.h"
 #include "message_overlay.h"
+#include "statustext_overlay.h"
 #include "multiplayer/chatui.h"
 #include "multiplayer/server.h"
 
@@ -267,6 +268,7 @@ void Player::MainLoop() {
 		Scene::instance->MainFunction();
 
 		Graphics::GetMessageOverlay().Update();
+		Graphics::GetStatusTextOverlay().Update();
 
 		++num_updates;
 	}
