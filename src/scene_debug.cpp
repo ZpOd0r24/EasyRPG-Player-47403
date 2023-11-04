@@ -44,6 +44,7 @@
 #include <lcf/data.h>
 #include "output.h"
 #include "transition.h"
+#include "multiplayer/chatui.h"
 
 namespace {
 struct IndexSet {
@@ -448,6 +449,9 @@ void Scene_Debug::vUpdate() {
 			case eOpenMenu:
 				DoOpenMenu();
 				break;
+			case eChat:
+				DoChat();
+				break;
 		}
 		Game_Map::SetNeedRefresh(true);
 	} else if (range_window->GetActive() && Input::IsRepeated(Input::RIGHT)) {
@@ -522,6 +526,7 @@ void Scene_Debug::UpdateRangeListWindow() {
 				addItem("Call MapEvent", Scene::Find(Scene::Map) != nullptr);
 				addItem("Call BtlEvent", is_battle);
 				addItem("Open Menu", !is_battle);
+				addItem("Chat");
 			}
 			break;
 		case eSwitch:
@@ -870,6 +875,11 @@ void Scene_Debug::DoOpenMenu() {
 	} else {
 		Scene::Push(std::make_shared<Scene_Menu>(), true);
 	}
+}
+
+void Scene_Debug::DoChat() {
+	CUI().SetFocus(true);
+	Scene::Pop();
 }
 
 void Scene_Debug::TransitionIn(SceneType /* prev_scene */) {
