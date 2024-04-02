@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.13...3.24 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.16...3.28 FATAL_ERROR)
 
 project(EasyRPG_Player VERSION 0.8
 	DESCRIPTION "Interpreter for RPG Maker 2000/2003 games"
@@ -29,9 +29,7 @@ if(NOT BUILD_CLIENT AND NOT BUILD_SERVER)
 	set(BUILD_CLIENT on)
 endif()
 
-if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.15.0")
-	option(CMAKE_FIND_PACKAGE_PREFER_CONFIG "Prefer config files over bundled FindXXX files. Set this to OFF when configuration fails and report a bug." ON)
-endif()
+option(CMAKE_FIND_PACKAGE_PREFER_CONFIG "Prefer config files over bundled FindXXX files. Set this to OFF when configuration fails and report a bug." ON)
 
 # Source Files
 add_library(${PROJECT_NAME} OBJECT
@@ -467,7 +465,6 @@ add_library(${PROJECT_NAME} OBJECT
 	src/window_teleport.h
 	src/window_varlist.cpp
 	src/window_varlist.h
-	src/external/rang.hpp
 )
 
 # These are actually unused when building in CMake
@@ -597,8 +594,8 @@ endif()
 
 if(${PLAYER_TARGET_PLATFORM} STREQUAL "SDL2")
 	target_sources(${PROJECT_NAME} PRIVATE
-		src/platform/sdl/audio.cpp
-		src/platform/sdl/audio.h
+		src/platform/sdl/sdl_audio.cpp
+		src/platform/sdl/sdl_audio.h
 		src/platform/sdl/sdl2_ui.cpp
 		src/platform/sdl/sdl2_ui.h)
 	target_compile_definitions(${PROJECT_NAME} PUBLIC USE_SDL=2)
@@ -618,10 +615,16 @@ if(${PLAYER_TARGET_PLATFORM} STREQUAL "SDL2")
 		add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/builds/android/app/src/gamebrowser)
 		set(PLAYER_BUILD_EXECUTABLE OFF)
 	endif()
+
+	if(NINTENDO_WIIU)
+		target_compile_definitions(${PROJECT_NAME} PUBLIC PLAYER_NINTENDO)
+		target_sources(${PROJECT_NAME} PRIVATE
+			src/platform/wiiu/input_buttons.cpp)
+	endif()
 elseif(${PLAYER_TARGET_PLATFORM} STREQUAL "SDL1")
 	target_sources(${PROJECT_NAME} PRIVATE
-		src/platform/sdl/audio.cpp
-		src/platform/sdl/audio.h
+		src/platform/sdl/sdl_audio.cpp
+		src/platform/sdl/sdl_audio.h
 		src/platform/sdl/axis.h
 		src/platform/sdl/sdl_ui.cpp
 		src/platform/sdl/sdl_ui.h)
@@ -711,11 +714,11 @@ elseif(${PLAYER_TARGET_PLATFORM} STREQUAL "wii")
 	target_compile_definitions(${PROJECT_NAME} PUBLIC USE_SDL=1 PLAYER_NINTENDO)
 	target_include_directories(${PROJECT_NAME} PUBLIC ${SDL_INCLUDE_DIR})
 	target_sources(${PROJECT_NAME} PRIVATE
+		src/platform/wii/audio.cpp
+		src/platform/wii/audio.h
 		src/platform/wii/clock.cpp
 		src/platform/wii/clock.h
 		src/platform/wii/input_buttons.cpp
-		src/platform/sdl/audio.cpp
-		src/platform/sdl/audio.h
 		src/platform/sdl/axis.h
 		src/platform/sdl/sdl_ui.cpp
 		src/platform/sdl/sdl_ui.h)
@@ -727,16 +730,17 @@ elseif(${PLAYER_TARGET_PLATFORM} STREQUAL "amigaos4")
 	target_compile_definitions(${PROJECT_NAME} PUBLIC USE_SDL=1)
 	target_include_directories(${PROJECT_NAME} PUBLIC ${SDL_INCLUDE_DIR})
 	target_sources(${PROJECT_NAME} PRIVATE
-		src/platform/sdl/audio.cpp
-		src/platform/sdl/audio.h
+		src/platform/sdl/sdl_audio.cpp
+		src/platform/sdl/sdl_audio.h
 		src/platform/sdl/axis.h
 		src/platform/sdl/sdl_ui.cpp
 		src/platform/sdl/sdl_ui.h)
+else()
 	message(FATAL_ERROR "Invalid target platform")
 endif()
 
 # Shared by homebrew platforms
-if(${PLAYER_TARGET_PLATFORM} MATCHES "^(3ds|psvita|switch|wii)$")
+if(${PLAYER_TARGET_PLATFORM} MATCHES "^(3ds|psvita|switch|wii)$" OR NINTENDO_WIIU)
 	target_compile_options(${PROJECT_NAME} PUBLIC -fno-exceptions -fno-rtti)
 	set(CMAKE_DL_LIBS "") # hack4icu!
 	set(PLAYER_ENABLE_TESTS OFF)
@@ -780,8 +784,10 @@ endif()
 
 if(NOT PLAYER_BUILD_EXECUTABLE AND BUILD_SHARED_LIBS)
 	# Need fPIC when compiling a shared library (e.g. libretro.so)
-	set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-	set_property(TARGET ${PROJECT_NAME} PROPERTY POSITION_INDEPENDENT_CODE ON)
+	include(CheckPIESupported)
+	check_pie_supported()
+	set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
+	set_property(TARGET ${PROJECT_NAME} PROPERTY POSITION_INDEPENDENT_CODE TRUE)
 endif()
 
 if(ANDROID)
@@ -798,9 +804,10 @@ if(WIN32)
 endif()
 
 if(APPLE)
+	enable_language(OBJCXX)
 	target_sources(${PROJECT_NAME} PRIVATE
-		src/platform/macos/utils.mm
-		src/platform/macos/utils.h
+		src/platform/macos/macos_utils.mm
+		src/platform/macos/macos_utils.h
 		src/platform/macos/midiout_device_coreaudio.cpp
 		src/platform/macos/midiout_device_coreaudio.h)
 
@@ -933,7 +940,9 @@ find_package(Pixman REQUIRED)
 target_link_libraries(${PROJECT_NAME} PIXMAN::PIXMAN)
 
 # Always enable Wine registry support on non-Windows, but not for console ports
-if(NOT CMAKE_SYSTEM_NAME STREQUAL "Windows" AND NOT ${PLAYER_TARGET_PLATFORM} MATCHES "^(psvita|3ds|switch|wii)$")
+if(NOT CMAKE_SYSTEM_NAME STREQUAL "Windows"
+	AND NOT ${PLAYER_TARGET_PLATFORM} MATCHES "^(psvita|3ds|switch|wii)$"
+	AND NOT NINTENDO_WIIU)
 	target_compile_definitions(${PROJECT_NAME} PUBLIC HAVE_WINE=1)
 endif()
 
@@ -1002,11 +1011,9 @@ if(${PLAYER_AUDIO_BACKEND} MATCHES "^(SDL2|SDL1|libretro|psvita|3ds|switch|wii|a
 	if(WIN32 OR APPLE)
 		set(SUPPORT_NATIVE_MIDI ON)
 	elseif(UNIX)
-		if(${CMAKE_VERSION} VERSION_GREATER_EQUAL 3.12)
-			find_package(ALSA)
-			if(ALSA_FOUND)
-				set(SUPPORT_NATIVE_MIDI ON)
-			endif()
+		find_package(ALSA)
+		if(ALSA_FOUND)
+			set(SUPPORT_NATIVE_MIDI ON)
 		endif()
 	endif()
 
@@ -1166,7 +1173,7 @@ if(${PLAYER_AUDIO_BACKEND} MATCHES "^(SDL2|SDL1|libretro|psvita|3ds|switch|wii|a
 endif()
 
 # Executable
-if(${PLAYER_BUILD_EXECUTABLE} AND (${PLAYER_TARGET_PLATFORM} STREQUAL "SDL2" OR ${PLAYER_TARGET_PLATFORM} STREQUAL "SDL1"))
+if(${PLAYER_BUILD_EXECUTABLE} AND ${PLAYER_TARGET_PLATFORM} MATCHES "^SDL(1|2)$" AND NOT NINTENDO_WIIU)
 	if(APPLE)
 		set(EXE_NAME "EasyRPG-Player.app")
 		set_source_files_properties(${${PROJECT_NAME}_BUNDLE_ICON} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
@@ -1218,7 +1225,11 @@ if(${PLAYER_BUILD_EXECUTABLE} AND (${PLAYER_TARGET_PLATFORM} STREQUAL "SDL2" OR 
 		set(PLAYER_JS_POSTJS "${CMAKE_CURRENT_SOURCE_DIR}/resources/emscripten/emscripten-post.js")
 		set(PLAYER_JS_SHELL "${CMAKE_CURRENT_SOURCE_DIR}/resources/emscripten/emscripten-shell.html")
 
-		set_property(TARGET ${EXE_NAME} PROPERTY LINK_FLAGS "-s ALLOW_MEMORY_GROWTH -s EXIT_RUNTIME -s ASYNCIFY -s ASYNCIFY_IGNORE_INDIRECT -s MINIFY_HTML=0 --pre-js ${PLAYER_JS_PREJS} --post-js ${PLAYER_JS_POSTJS} -sDEFAULT_LIBRARY_FUNCS_TO_INCLUDE=['$autoResumeAudioContext','$dynCall']")
+		set_property(TARGET ${EXE_NAME} PROPERTY LINK_FLAGS
+			"-sALLOW_MEMORY_GROWTH -sMINIFY_HTML=0 -sMODULARIZE -sEXPORT_NAME=createEasyRpgPlayer \
+			 -sEXIT_RUNTIME --bind --pre-js ${PLAYER_JS_PREJS} --post-js ${PLAYER_JS_POSTJS} \
+			 -sDEFAULT_LIBRARY_FUNCS_TO_INCLUDE=['$autoResumeAudioContext','$dynCall'] \
+			 -sEXPORTED_FUNCTIONS=_main,_malloc,_free")
 		set_source_files_properties("src/platform/sdl/main.cpp" PROPERTIES
 			OBJECT_DEPENDS "${PLAYER_JS_PREJS};${PLAYER_JS_POSTJS};${PLAYER_JS_SHELL}")
 
@@ -1226,6 +1237,13 @@ if(${PLAYER_BUILD_EXECUTABLE} AND (${PLAYER_TARGET_PLATFORM} STREQUAL "SDL2" OR 
 			set_target_properties(${EXE_NAME} PROPERTIES SUFFIX ".html")
 			set_property(TARGET ${EXE_NAME} APPEND_STRING PROPERTY LINK_FLAGS " --shell-file ${PLAYER_JS_SHELL}")
 		endif()
+
+		target_compile_options(${PROJECT_NAME} PUBLIC -fno-exceptions)
+
+		target_sources(${PROJECT_NAME} PRIVATE
+				src/platform/emscripten/clock.h
+				src/platform/emscripten/interface.cpp
+				src/platform/emscripten/interface.h)
 
 		target_link_libraries(${EXE_NAME} "idbfs.js")
 
@@ -1260,7 +1278,8 @@ if(${PLAYER_BUILD_EXECUTABLE} AND (${PLAYER_TARGET_PLATFORM} STREQUAL "SDL2" OR 
 		endif()
 		install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PLAYER_JS_OUTPUT_NAME}.wasm DESTINATION ${CMAKE_INSTALL_BINDIR})
 	endif()
-elseif(${PLAYER_TARGET_PLATFORM} MATCHES "^(psvita|3ds|switch|wii)$")
+elseif(${PLAYER_TARGET_PLATFORM} MATCHES "^(psvita|3ds|switch|wii)$" OR NINTENDO_WIIU)
+	set(CPACK_PLATFORM "${PLAYER_TARGET_PLATFORM}")
 	if(NINTENDO_3DS)
 		add_executable(easyrpg-player src/platform/3ds/main.cpp)
 		target_link_libraries(easyrpg-player
@@ -1294,9 +1313,7 @@ elseif(${PLAYER_TARGET_PLATFORM} MATCHES "^(psvita|3ds|switch|wii)$")
 		install(FILES ${CMAKE_CURRENT_BINARY_DIR}/easyrpg-player.nro
 			DESTINATION easyrpg-player COMPONENT switch)
 	elseif(NINTENDO_WII)
-		add_executable(easyrpg-player
-			src/platform/wii/main.h
-			src/platform/wii/main.cpp)
+		add_executable(easyrpg-player src/platform/wii/main.cpp)
 		target_link_libraries(easyrpg-player
 			${PROJECT_NAME}
 			${SDL_LIBRARIES}
@@ -1312,6 +1329,19 @@ elseif(${PLAYER_TARGET_PLATFORM} MATCHES "^(psvita|3ds|switch|wii)$")
 		install(FILES resources/wii/icon.png
 			${CMAKE_CURRENT_BINARY_DIR}/resources/wii/meta.xml
 			DESTINATION easyrpg-player COMPONENT wii)
+	elseif(NINTENDO_WIIU)
+		add_executable(easyrpg-player src/platform/sdl/main.cpp)
+		target_link_libraries(easyrpg-player ${PROJECT_NAME})
+		wut_create_rpx(easyrpg-player)
+		wut_create_wuhb(easyrpg-player
+			NAME "EasyRPG Player ${PLAYER_VERSION_FULL}"
+			SHORT_NAME "Player"
+			AUTHOR "EasyRPG Team"
+		) # todo icon, splashs)
+		install(FILES ${CMAKE_CURRENT_BINARY_DIR}/easyrpg-player.rpx
+				${CMAKE_CURRENT_BINARY_DIR}/easyrpg-player.wuhb
+			DESTINATION . COMPONENT wiiu)
+		set(CPACK_PLATFORM "wiiu")
 	elseif(VITA)
 		set(CMAKE_EXECUTABLE_SUFFIX .elf)
 		add_executable(easyrpg-player src/platform/psvita/main.cpp)
@@ -1346,7 +1376,7 @@ elseif(${PLAYER_TARGET_PLATFORM} MATCHES "^(psvita|3ds|switch|wii)$")
 	endif()
 	install(TARGETS easyrpg-player RUNTIME DESTINATION . COMPONENT debug)
 	# debug information
-	if(${PLAYER_TARGET_PLATFORM} MATCHES "^(3ds|switch|wii)$")
+	if(${PLAYER_TARGET_PLATFORM} MATCHES "^(3ds|switch|wii)$" OR NINTENDO_WIIU)
 		dkp_target_generate_symbol_list(easyrpg-player)
 		install(FILES ${CMAKE_CURRENT_BINARY_DIR}/easyrpg-player.map
 				${CMAKE_CURRENT_BINARY_DIR}/easyrpg-player.lst
@@ -1360,7 +1390,7 @@ elseif(${PLAYER_TARGET_PLATFORM} MATCHES "^(psvita|3ds|switch|wii)$")
 	if(PLAYER_VERSIONED_PACKAGES)
 		string(APPEND CPACK_PACKAGE_FILE_NAME "-${PLAYER_VERSION}")
 	endif()
-	set(CPACK_ARCHIVE_DEBUG_FILE_NAME "${CPACK_PACKAGE_FILE_NAME}-${PLAYER_TARGET_PLATFORM}-debug")
+	set(CPACK_ARCHIVE_DEBUG_FILE_NAME "${CPACK_PACKAGE_FILE_NAME}-${CPACK_PLATFORM}-debug")
 	set(CPACK_COMPONENT_INCLUDE_TOPLEVEL_DIRECTORY OFF) # we do this manually
 	include(CPack)
 elseif(${PLAYER_TARGET_PLATFORM} STREQUAL "amigaos4")
@@ -1369,7 +1399,7 @@ elseif(${PLAYER_TARGET_PLATFORM} STREQUAL "amigaos4")
 		${PROJECT_NAME}
 		${SDL_LIBRARIES})
 	# FIXME: packaging?
-else()
+else() # library
 	if(${PLAYER_TARGET_PLATFORM} STREQUAL "libretro")
 		add_library(easyrpg_libretro
 			src/platform/libretro/audio.cpp
@@ -1517,7 +1547,10 @@ if(PLAYER_ENABLE_TESTS)
 	if(CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
 		target_compile_definitions(test_runner_player PUBLIC EP_NATIVE_TEST_PATH=\"${CMAKE_CURRENT_SOURCE_DIR}/tests/assets\")
 		target_compile_definitions(test_runner_player PUBLIC EP_TEST_PATH=\"/assets\")
+		target_compile_definitions(test_runner_player PUBLIC DOCTEST_CONFIG_NO_EXCEPTIONS_BUT_WITH_ALL_ASSERTS=1)
+
 		target_link_libraries(test_runner_player "nodefs.js")
+		set_property(TARGET test_runner_player PROPERTY LINK_FLAGS "-sALLOW_MEMORY_GROWTH --bind")
 	else()
 		target_compile_definitions(test_runner_player PUBLIC EP_TEST_PATH=\"${CMAKE_CURRENT_SOURCE_DIR}/tests/assets\")
 	endif()
@@ -1531,10 +1564,6 @@ if(PLAYER_ENABLE_TESTS)
 	endif()
 	add_dependencies(check_player test_runner_player)
 	add_dependencies(check check_player)
-
-	if(CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
-		set_property(TARGET test_runner_player APPEND_STRING PROPERTY LINK_FLAGS "-s ALLOW_MEMORY_GROWTH")
-	endif()
 endif()
 
 # Instrumentation framework

@@ -205,8 +205,6 @@ void Scene::MainFunction() {
 			TransitionOut(next_scene);
 		}
 
-		Input::ResetNonSystemKeys();
-
 		init = false;
 	}
 }

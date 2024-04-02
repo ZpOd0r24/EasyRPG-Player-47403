@@ -15,29 +15,21 @@
  * along with EasyRPG Player. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef EP_EMSCRIPTEN_INTERFACE_H
+#define EP_EMSCRIPTEN_INTERFACE_H
 
-#ifndef EP_MANIAC_PATCH
-#define EP_MANIAC_PATCH
+class Emscripten_Interface {
+public:
+	static bool DownloadSavegame(int slot);
+	static void UploadSavegame(int slot);
+	static void RefreshScene();
+	static void TakeScreenshot();
+	static void Reset();
+};
 
-#include <array>
-#include <cstdint>
-#include "span.h"
-
-#include "game_strings.h"
-
-class Game_Interpreter;
-
-namespace ManiacPatch {
-	int32_t ParseExpression(Span<const int32_t> op_codes, const Game_Interpreter& interpreter);
-
-	std::array<bool, 50> GetKeyRange();
-
-	bool GetKeyState(uint32_t key_id);
-
-	bool CheckString(StringView str_l, StringView str_r, int op, bool ignore_case);
-
-	StringView GetLcfName(int data_type, int id, bool is_dynamic);
-	StringView GetLcfDescription(int data_type, int id, bool is_dynamic);
-}
+class Emscripten_Interface_Private {
+public:
+	static bool UploadSavegameStep2(int slot, int buffer_addr, int size);
+};
 
 #endif

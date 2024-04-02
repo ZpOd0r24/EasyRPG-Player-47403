@@ -33,32 +33,13 @@ Input::ButtonMappingArray Input::GetDefaultButtonMappings() {
 		{SHIFT, Keys::JOY_Y},
 		{N0, Keys::JOY_LSTICK},
 		{N5, Keys::JOY_RSTICK},
-		{DEBUG_THROUGH, Keys::JOY_SHOULDER_LEFT},
+		{DEBUG_ABORT_EVENT, Keys::JOY_SHOULDER_LEFT},
 		{TOGGLE_FPS, Keys::JOY_SHOULDER_RIGHT},
 		{SETTINGS_MENU, Keys::JOY_START},
 		{RESET, Keys::JOY_BACK},
-		{FAST_FORWARD_A, Keys::JOY_RTRIGGER_FULL},
-		{DEBUG_MENU, Keys::JOY_LTRIGGER_FULL},
 #endif
-		// Touchscreen
-		{N0, Keys::N0},
-		{N1, Keys::N1},
-		{N2, Keys::N2},
-		{N3, Keys::N3},
-		{N4, Keys::N4},
-		{N5, Keys::N5},
-		{N6, Keys::N6},
-		{N7, Keys::N7},
-		{N8, Keys::N8},
-		{N9, Keys::N9},
-		{PLUS, Keys::KP_ADD},
-		{MINUS, Keys::KP_SUBTRACT},
-		{MULTIPLY, Keys::KP_MULTIPLY},
-		{DIVIDE, Keys::KP_DIVIDE},
-		{PERIOD, Keys::KP_PERIOD},
-		{CANCEL, Keys::JOY_TOUCH},
 
-#if defined(USE_JOYSTICK_AXIS) && defined(SUPPORT_JOYSTICK_AXIS)
+#if defined(USE_JOYSTICK_AXIS)  && defined(SUPPORT_JOYSTICK_AXIS)
 		{UP, Keys::JOY_LSTICK_UP},
 		{DOWN, Keys::JOY_LSTICK_DOWN},
 		{LEFT, Keys::JOY_LSTICK_LEFT},
@@ -70,49 +51,57 @@ Input::ButtonMappingArray Input::GetDefaultButtonMappings() {
 		{N6, Keys::JOY_RSTICK_RIGHT},
 		{N7, Keys::JOY_RSTICK_UP_LEFT},
 		{N8, Keys::JOY_RSTICK_UP},
-		{N9, Keys::JOY_RSTICK_UP_RIGHT}
+		{N9, Keys::JOY_RSTICK_UP_RIGHT},
+		{FAST_FORWARD_A, Keys::JOY_RTRIGGER_FULL},
+		{DEBUG_MENU, Keys::JOY_LTRIGGER_FULL},
+#endif
+
+#if defined(USE_TOUCH) && defined(SUPPORT_TOUCH)
+		{MOUSE_LEFT, Keys::ONE_FINGER},
+		{MOUSE_RIGHT, Keys::TWO_FINGERS},
+		{MOUSE_MIDDLE, Keys::THREE_FINGERS},
 #endif
 	};
 }
 
 Input::KeyNamesArray Input::GetInputKeyNames() {
+	// FIXME: Wiimote mapping is broken, consider removing
 	return {
-		{Keys::JOY_DPAD_UP, "D-Pad Up"},
-		{Keys::JOY_DPAD_DOWN, "D-Pad Down"},
-		{Keys::JOY_DPAD_LEFT, "D-Pad Left"},
-		{Keys::JOY_DPAD_RIGHT, "D-Pad Up"},
-		{Keys::JOY_A, "A"},
-		{Keys::JOY_B, "B"},
-		{Keys::JOY_X, "X"},
-		{Keys::JOY_Y, "Y"},
+		{Keys::JOY_A, "A"}, // 2 (Wiimote)
+		{Keys::JOY_B, "B"}, // 1 (Wiimote)
+		{Keys::JOY_X, "X"}, // (Pad/CC/Pro) / B (Wiimote) / Z (Wiimote+Nunchuck)
+		{Keys::JOY_Y, "Y"}, // (Pad/CC/Pro) / A (Wiimote) / C (Wiimote+Nunchuck)
+		{Keys::JOY_BACK, "-"},
+		{Keys::JOY_START, "+"},
+		{Keys::JOY_GUIDE, "Home"}, // FIXME: not mapped at all, maybe use custom trigger
 		{Keys::JOY_SHOULDER_LEFT, "L"},
 		{Keys::JOY_SHOULDER_RIGHT, "R"},
 		{Keys::JOY_LTRIGGER_FULL, "ZL"},
 		{Keys::JOY_RTRIGGER_FULL, "ZR"},
-		{Keys::JOY_BACK, "Select"},
-		{Keys::JOY_START, "Start"},
-		// Touchscreen
-		{Keys::N0, "Touch 0"},
-		{Keys::N1, "Touch 1"},
-		{Keys::N2, "Touch 2"},
-		{Keys::N3, "Touch 3"},
-		{Keys::N4, "Touch 4"},
-		{Keys::N5, "Touch 5"},
-		{Keys::N6, "Touch 6"},
-		{Keys::N7, "Touch 7"},
-		{Keys::N8, "Touch 8"},
-		{Keys::N9, "Touch 9"},
-		{Keys::KP_ADD, "Touch +"},
-		{Keys::KP_SUBTRACT, "Touch -"},
-		{Keys::KP_MULTIPLY, "Touch *"},
-		{Keys::KP_DIVIDE, "Touch /"},
-		{Keys::KP_PERIOD, "Touch ."},
-		{Keys::JOY_TOUCH, "Touch Logo"}
+
+		{Keys::JOY_DPAD_UP, "D-Pad Up"},
+		{Keys::JOY_DPAD_DOWN, "D-Pad Down"},
+		{Keys::JOY_DPAD_LEFT, "D-Pad Left"},
+		{Keys::JOY_DPAD_RIGHT, "D-Pad Up"},
+
+		{Keys::JOY_LSTICK, "Left Stick Press"},
+		{Keys::JOY_LSTICK_UP, "Left Stick Up"},
+		{Keys::JOY_LSTICK_DOWN, "Left Stick Down"},
+		{Keys::JOY_LSTICK_LEFT, "Left Stick Left"},
+		{Keys::JOY_LSTICK_RIGHT, "Left Stick Right"},
+
+		{Keys::JOY_RSTICK, "Right Stick Press"},
+		{Keys::JOY_RSTICK_UP, "Right Stick Up"},
+		{Keys::JOY_RSTICK_DOWN, "Right Stick Down"},
+		{Keys::JOY_RSTICK_LEFT, "Right Stick Left"},
+		{Keys::JOY_RSTICK_RIGHT, "Right Stick Right"},
 	};
 }
 
 void Input::GetSupportedConfig(Game_ConfigInput& cfg) {
+#if defined(USE_JOYSTICK) && defined(SUPPORT_JOYSTICK)
 	cfg.gamepad_swap_ab_and_xy.SetOptionVisible(true);
 	cfg.gamepad_swap_analog.SetOptionVisible(true);
 	cfg.gamepad_swap_dpad_with_buttons.SetOptionVisible(true);
+#endif
 }
