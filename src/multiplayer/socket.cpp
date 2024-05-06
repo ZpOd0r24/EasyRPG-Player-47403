@@ -330,6 +330,7 @@ void ConnectorSocket::Connect() {
 	if (is_connect)
 		return;
 	is_connect = true;
+	is_failed = false;
 
 	manually_close_flag = false;
 
@@ -341,8 +342,12 @@ void ConnectorSocket::Connect() {
 		// call uv_stop
 		async_data.stop_flag = true;
 		uv_async_send(&async);
-		if (!manually_close_flag)
-			OnDisconnect();
+		if (!manually_close_flag) {
+			if (is_failed)
+				OnFail();
+			else
+				OnDisconnect();
+		}
 	};
 
 	std::thread([this]() {
@@ -398,6 +403,7 @@ void ConnectorSocket::Connect() {
 				[](uv_connect_t *connect_req, int status) {
 			auto socket = static_cast<ConnectorSocket*>(connect_req->data);
 			if (status < 0) {
+				socket->is_failed = true;
 				socket->OnWarning(std::string("Connection failed: ").append(uv_strerror(status)));
 				socket->Close();
 				return;
@@ -427,6 +433,7 @@ void ConnectorSocket::Connect() {
 						}
 						break;
 					}
+					socket->is_failed = true;
 					socket->OnWarning(std::string("SOCKS5 request failed at step: ").append(
 							std::to_string(static_cast<uint8_t>(socket->socks5_step))));
 					socket->Close();
