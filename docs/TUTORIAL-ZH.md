@@ -1,19 +1,6 @@
-# EasyRPG Player 联机版
-
-[English](../README.md)
-
-多人联机的 C++ 实现，通过此项目可以快速的获得客户端和服务端。
-
-该项目是从另一个项目中对比找出多人联机的部分，然后用 patch 导入的这些代码。所以这是一个基于 EasyRPG/Player 的项目，并从 ynoproject/ynoclient 导入了联机代码，详情请见该项目的首次提交 44347b6 (Initial commit. Add multiplayer changes)。
-
-你可能有这样一个疑问，服务端是基于什么？因为复用了客户端的代码，所以服务端像是一面客户端的镜子（指代码上）。移除了 C2S 和 S2C 的命名空间也将这两种数据包类型合二为一成为双向可用的数据包类型，因此现在的 messages.h 可读性提高了很多。以后可能会尝试使用二进制数据结构来再次重构数据包类，以解决数据中不能包含特定的定界符问题。
-
-如果你对此项目很感兴趣，可以克隆该仓库到本地去浏览代码。如果不知道如何使用 Git 请参考：[Git使用手册](https://git-scm.com/book/zh/v2)
-
-另外很多更新会先提交到 master\_tmp 分支，请注意切换。
-
-
 ## 如何使用
+
+[English](TUTORIAL.md)
 
 ### 开始之前
 
@@ -228,38 +215,3 @@ https://github.com/ynoproject/ynotranslations/archive/refs/heads/master.zip
 ### 是否有静音按键?
 
 有的，你可以按 M 键切换静音
-
-
-## 需求
-
-### 必须的
-
-- [liblcf] 用于 RPG Maker 的数据读取
-- [sock++] 用于多人联机
-- [crypto++] 用于多人联机的聊天
-- SDL2 用于控制图像和声音的输出
-- Pixman 用于底层像素操作
-- libpng 用于 PNG 图像支持
-- zlib 用于 XYZ 图像支持
-- fmtlib 用于内部日志格式化
-
-### 可选的
-
-- FreeType2 用于字符到点阵图的支持 (+ HarfBuzz 用于 Unicode 支持)
-- mpg123 用于 MP3 音频支持
-- WildMIDI 用于 MIDI 音频支持
-- Libvorbis / Tremor 用于 Ogg Vorbis 音频支持
-- opusfile 用于 Opus 音频支持
-- libsndfile 用于 WAVE 音频支持
-- libxmp 用于 tracker music 支持
-- SpeexDSP 用于音频重采样
-
-SDL 1.2 仍然支持，但已过时
-
-[liblcf]: https://github.com/EasyRPG/liblcf
-[sock++]: https://github.com/fpagliughi/sockpp
-[crypto++]: https://www.cryptopp.com/wiki/Main_Page
-
-
----
-[致谢 & 许可](../README.md#credits)
