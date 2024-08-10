@@ -21,6 +21,20 @@
 
 #ifndef SERVER
 #  include "../player.h"
+#else
+#  include <iostream>
+#endif
+
+#ifdef SERVER
+static std::string output_time() {
+	constexpr int buf_size = 128;
+	char buffer[buf_size];
+
+	std::time_t t = std::time(nullptr);
+	auto res = strftime(buffer, buf_size, "[%Y-%m-%d %H:%M:%S] ", std::localtime(&t));
+
+	return std::string(buffer, res);
+}
 #endif
 
 namespace {
@@ -45,7 +59,7 @@ void OutputMt::WarningStr(std::string const& warn) {
 	}
 	log_buffer.emplace_back(LogLevel::Warning, warn);
 #else
-	Output::WarningStr(warn);
+	std::cout << output_time() << "W: " << warn << std::endl;
 #endif
 }
 
@@ -58,7 +72,7 @@ void OutputMt::InfoStr(std::string const& msg) {
 	}
 	log_buffer.emplace_back(LogLevel::Info, msg);
 #else
-	Output::InfoStr(msg);
+	std::cout << output_time() << "I: " << msg << std::endl;
 #endif
 }
 
@@ -71,7 +85,7 @@ void OutputMt::DebugStr(std::string const& msg) {
 	}
 	log_buffer.emplace_back(LogLevel::Debug, msg);
 #else
-	Output::DebugStr(msg);
+	std::cout << output_time() << "D: " << msg << std::endl;
 #endif
 }
 
