@@ -1399,8 +1399,6 @@ void Sdl2Ui::vGetConfig(Game_ConfigVideo& cfg) const {
 	// Fullscreen is handled by the browser
 	cfg.fullscreen.SetOptionVisible(false);
 	cfg.window_zoom.SetOptionVisible(false);
-	// Toggling this freezes the web player
-	cfg.vsync.SetOptionVisible(false);
 	cfg.pause_when_focus_lost.Lock(false);
 	cfg.pause_when_focus_lost.SetOptionVisible(false);
 #elif defined(__WIIU__)
