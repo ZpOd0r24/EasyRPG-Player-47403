@@ -24,7 +24,6 @@
 #include <iomanip>
 #include <fstream>
 #include <memory>
-#include <thread>
 #include <csignal>
 
 #ifdef _WIN32
@@ -43,6 +42,7 @@
 #include "filefinder.h"
 #include "filefinder_rtp.h"
 #include "fileext_guesser.h"
+#include "filesystem_hook.h"
 #include "game_actors.h"
 #include "game_battle.h"
 #include "game_map.h"
@@ -261,10 +261,22 @@ void Player::MainLoop() {
 
 	Player::UpdateInput();
 
+	if (!DisplayUi->ProcessEvents()) {
+		Scene::PopUntil(Scene::Null);
+		Player::Exit();
+		return;
+	}
+
 	int num_updates = 0;
 	while (Game_Clock::NextGameTimeStep()) {
 		if (num_updates > 0) {
 			Player::UpdateInput();
+
+			if (!DisplayUi->ProcessEvents()) {
+				Scene::PopUntil(Scene::Null);
+				Player::Exit();
+				return;
+			}
 		}
 
 		Scene::old_instances.clear();
@@ -348,9 +360,6 @@ void Player::UpdateInput() {
 	if (Main_Data::game_quit) {
 		reset_flag |= Main_Data::game_quit->ShouldQuit();
 	}
-
-	// Update Logic:
-	DisplayUi->ProcessEvents();
 }
 
 void Player::Update(bool update_scene) {
@@ -736,6 +745,9 @@ void Player::CreateGameObjects() {
 		Output::Error("Invalid encoding: {}.", encoding);
 	}
 	escape_char = Utils::DecodeUTF32(Player::escape_symbol).front();
+
+	// Special handling for games with altered files
+	FileFinder::SetGameFilesystem(HookFilesystem::Detect(FileFinder::Game()));
 
 	// Check for translation-related directories and load language names.
 	translation.InitTranslations();
