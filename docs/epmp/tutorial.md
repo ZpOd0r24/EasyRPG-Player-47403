@@ -1,29 +1,93 @@
 ## Tutorial
 
-[简体中文](TUTORIAL-ZH.md)
-
 ### Before the start
 
-If you need to use the program but cannot compile it, you can go to the [Releases](https://github.com/monokotech/EasyRPG-Multiplayer-Native/releases) to download precompiled binaries. You need to choose the architecture that is suitable for the system you are currently using.
+If you need to use the program but cannot compile it, you can go to the [Releases](https://github.com/TsukiYumeRPG/EasyRPG-Player/releases) to download precompiled binaries. You need to choose the architecture that is suitable for the system you are currently using.
 
 Open the terminal, which is cmd.exe for windows and Terminal.app for macOS.
 
-And then use the file manager to drag the game folder to the terminal ([What is a game folder? See the FAQ below](#what-is-the-game-folder)).
+Use the file manager to drag the [game folder](#game-folder) to the terminal.
 
-Add `cd ` before the folder path. In cmd.exe, use `cd /d ` (/d means switching drive) to enter the game folder.
+Add `cd ` before the game folder. In cmd.exe, use `cd /d ` instead (where `/d` means switching drives).
 
-At this time you need to find the location of Player,
- then run the `<absolute path>/Player.exe` or the `<absolute path>/EasyRPG Player.app/Contents/MacOS/EasyRPG\ Player` for macOS.
+You need to find the location of Player,
+ then run either `<absolute path>/Player.exe` or `<absolute path>/EasyRPG Player.app/Contents/MacOS/EasyRPG\ Player` for macOS.
 
-The first run will display in full screen (this is the default behavior of EasyRPG Player).
-
-If you don't like it, you can press F1 and select Video -> Fullscreen as OFF.
+The first run will display in full screen. If you don't like it, you can press F1 and select Video -> Fullscreen as OFF.
 
 Finally go back and press `<Save Settings>` once, and return to the game menu.
 
-Now, you can press F10 to bring up the Chat Ui, and F9 to toggle notifications (this is a layer within Player).
+Okay, you can press TAB to bring up the ChatUi, and F3 to toggle notifications.
 
-### Client Commands
+### P2P support
+
+This can be done using [n3n](https://github.com/n42n/n3n) or [n2n](https://github.com/ntop/n2n).
+
+On Linux, manually creating a TAP device can prevent n2n from automatically creating a TAP device.
+ This helps in running n2n as a non-root user.
+
+```
+edge -f -d <tap-device-name> \
+	-c community -k happyn \
+	-l "supernode-address:port"
+
+Running as a non-root user requires specifying this: -u $(id -u) -g $(id -g)
+Always use the supernode via TCP: -S2
+Automatically disable multicast: -e auto
+Prevent some meaningless prints: --no-port-forwarding
+```
+
+Windows can use [happynwindows](https://github.com/happynclient/happynwindows/releases).
+ Currently, the n2n on Windows does not support -S2 option.
+
+If you need to stay connected to the supernode, you can use ncat to broadcast empty messages at 1 second intervals.
+ To get ncat from [nmap](https://nmap.org/download).
+
+Broadcast at intervals example (255.255.255.255 can be replaced with 10.226.123.255 if metrics are not set):
+```
+# Linux/MacOS (Save as .sh file)
+while true; do echo | ncat -u 255.255.255.255; sleep 1; done
+
+:: Windows (Save as .bat file)
+:loop
+echo | ncat -u 255.255.255.255
+timeout /t 1 >nul
+goto loop
+```
+
+The community name `community` and the password `happyn` are the default configurations for happynwindows.
+ Using this community name will generate an LAN ip of 10.226.123.0/24.
+ (The community name determines the LAN ip).
+
+On Windows, if [ForceBindIP](https://r1ch.net/projects/forcebindip) does not work, you can adjust the metrics of the interfaces.
+
+Windows interface metric settings:
+```
+:: Use `netsh interface show interface` to list interfaces
+:: Use `route print` to check metrics
+:: Systems in different languages will display interface names based on your language
+:: The tap of n2n will have a lower metric
+
+:: Default interface
+netsh interface ipv4 set interface interface="Ethernet" metric=500
+:: n2n tap
+netsh interface ipv4 set interface interface="Ethernet 2" metric=1
+```
+
+**Note that using a P2P connection may lead to IP leakage. Therefore, you can use a proxy in front.**
+
+Use `ncat -u 127.0.0.1 5644` to check the status, press Enter to print.
+
+When you see "pSp", it means that p2p intranet penetration is not supported and that it is forwarded through a supernode.
+
+If the P2P connection has been established, start the epmp server, and then the other party can connect using `!c 10.226.123.x`.
+
+The ideal state of applying the client/server model in P2P is having only two people.
+ Better epmp P2P support will be available in the future.
+
+Available super nodes provided by volunteers: [n2n-supernodes](https://ynfg.pages.dev/n2n-supernodes).
+
+### Client commands
 
 `!help`
 
@@ -36,6 +100,10 @@ You can run the server with this command.
 As long as Player.exe can be run, the server can be started.
 
 Servers can be started within a LAN (e.g. same WiFi or VPN), whether on mobile or computer.
+
+`!crypt [Password]`
+
+Toggle connection encryption. (See [crypt](#crypt))
 
 `!connect [address]` (alias !c)
 
@@ -57,7 +125,7 @@ If you set !name \<unknown\> it will revert to the empty name.
 
 Switch chat visibility.
 
-Enter !chat CRYPT [password] and a key will be generated.
+Enter !chat [CRYPT](#crypt) [password] and a key will be generated.
 
 After that, only clients with the same password can see the chat messages.
 
@@ -65,9 +133,7 @@ If the current visibility is CRYPT, it can be changed to other visibility, such 
 
 Enter !chat CRYPT again, no password is required and you can switch back to CRYPT.
 
-What is CRYPT (encrypted chat)? [See the FAQ below](#what-is-chat-crypt).
-
-`!log [LOCAL, GLOBAL, CRYPT]`
+`!log [LOCAL, GLOBAL, CRYPT, VERBOSE]`
 
 Enter a visibility to !log to hide or show messages in that visibility.
 
@@ -75,40 +141,32 @@ Enter a visibility to !log to hide or show messages in that visibility.
 
 Toggle the immersive mode.
 
-You can save the settings for the above commands via F1 -> \<Save Settings\>
+You can save the settings for the above commands via F1 -> \<Save Settings\>.
+ The settings of the !connect, !name, !chat, and !immersive commands will be saved.
 
-The settings of the !connect, !name, !chat, and !immersive commands will be saved.
+Some commands may not be listed. You can check with `!help`
 
-### Use Podman or Docker to run the server
-
-Although this project uses podman, you can still use docker to do the same thing.
-
-```
-# Change directory
-cd EasyRPG-Multiplayer-Native
-
-# Build the image
-podman build --build-arg TAG="$(git describe --tags)" -t epmp_img .
-
-# Create the container
-podman create --name epmp_container -p 6500:6500 epmp_img
-
-# Start the container
-podman restart epmp_container
-
-# Remove the container
-podman stop epmp_container && podman rm epmp_container
-```
-
-### Use the command line to run the server
+### Dedicated server
 
 Player.exe --server --bind-address 0.0.0.0[:port] --config-path /path/to/folder
 
 Player.exe needs to be renamed with the corresponding executable filename based on your system.
 
-Dedicated server example:
+Standalone server binary:
 
-easyrpg-player-server --bind-address 0.0.0.0[:port] --config-path /path/to/file.ini
+```
+usage: easyrpg-player-server <options>
+-n, --no-heartbeats
+-a, --bind-address
+-A, --bind-address-2
+-U, --max-users
+```
+
+The -A, --bind-address-2 option can be ignored. It is a legacy from when it was used to start an IPv6 server.
+
+Now you can bind both IPv4 and IPv6 simultaneously using a format like [::]:6500
+
+For WebSocket, the server port only supports unencrypted and uncompressed WebSocket protocols.
 
 ### Compile on linux
 
@@ -127,7 +185,8 @@ pacman -S harfbuzz mpg123 wildmidi libvorbis opusfile libsndfile libxmp speexdsp
 
 # Compile
 # You can decide whether to compile a dedicated server by adjusting `-DBUILD_CLIENT=on -DBUILD_SERVER=off`
-cmake -B build -DBUILD_CLIENT=on -DBUILD_SERVER=off -DPLAYER_MULTIPLAYER=on -DPLAYER_BUILD_LIBLCF=on -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+cmake -B build -DBUILD_CLIENT=on -DBUILD_SERVER=off -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DPLAYER_MULTIPLAYER=on -DPLAYER_BUILD_LIBLCF=on -DPLAYER_BUILD_LIBLCF_GIT="https://github.com/TsukiYumeRPG/EasyRPG-liblcf" -DPLAYER_BUILD_LIBLCF_BRANCH="player-dev"
+
 cmake --build build -j${$(getconf _NPROCESSORS_ONLN):-2}
 ```
 
@@ -149,70 +208,49 @@ brew install sdl2 pixman libpng zlib fmt
 brew install freetype mpg123 wildmidi libvorbis opusfile libsndfile speexdsp
 
 # Compile
-ICU_ROOT=$(brew --prefix)/opt/icu4c cmake -B build -DPLAYER_MULTIPLAYER=on -DPLAYER_BUILD_LIBLCF=on -DCMAKE_BUILD_TYPE=RelWithDebInfo -DPLAYER_WITH_OPUS=off -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+ICU_ROOT=$(brew --prefix)/opt/icu4c cmake -B build -DPLAYER_MULTIPLAYER=on -DCMAKE_BUILD_TYPE=RelWithDebInfo -DPLAYER_WITH_OPUS=off -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DPLAYER_MULTIPLAYER=on -DPLAYER_BUILD_LIBLCF=on -DPLAYER_BUILD_LIBLCF_GIT="https://github.com/TsukiYumeRPG/EasyRPG-liblcf" -DPLAYER_BUILD_LIBLCF_BRANCH="player-dev"
 cmake --build build -j${$(getconf _NPROCESSORS_ONLN):-2}
 ```
 
 ### Compile on Windows
 
-Please refer to: [Guide: How To Build EasyRPG Player on windows](https://community.easyrpg.org/t/guide-how-to-build-easyrpg-player-on-windows/1174)
+Refer to: [Guide: How To Build EasyRPG Player on windows](https://community.easyrpg.org/t/guide-how-to-build-easyrpg-player-on-windows/1174)
 
 ### More compilation examples
 
-You can view the .github/workflows/releases.yml file.
+You can check out the [cross-platform-compilation.yml](/.github/workflows/cross-platform-compilation.yml) file.
 
 
-## FAQ
+## Cheatsheet
 
-### What is the game folder?
+### Game folder
 
-The game folder should include a lot of .lmu files, and may include the RPG\_RT.exe
+The game folder should include many .lmu files and may also include RPG\_RT.exe
 
-### What is !chat CRYPT
+### CRYPT
 
-The CRYPT using end-to-end encryption prevents chat messages from being captured by middlemen, such as servers, VPN servers or ISPs.
+This is symmetric encryption to ensure that the traffic cannot be intercepted.
 
-Encryption uses AES-256-GCM Authenticated Encryption.
+Implementation: [crypto.cpp](https://github.com/TsukiYumeRPG/EasyRPG-Player/blob/0108483/src/multiplayer/util/crypto.cpp)
 
-The password will first be iterated 600000 times through PBKDF2 to obtain a 256bit key.
+### Translations
 
-Then use the key to make an integer through CRC32 and passed to the server to match clients with the same password.
+Download the [master.zip](https://github.com/TsukiYumeRPG/TyRPG-translations-yno/archive/refs/heads/master.zip) file and extract.
 
-This key is saved to the configuration file as Base64.
+Find the language folder you need in `TyRPG-translations-yno`, then copy it to the game folder.
+ Rename the copied folder to `Language` and restart the Player. A new option will appear in the menu and select the language.
 
+To lock the language, pass --language \<name\> to the player. The required name is in the Language folder.
 
-The implementation is here: [chatui.cpp](https://github.com/monokotech/EasyRPG-Multiplayer-Native/blob/9b63310aa53409b5ac1c549c1a4601e5468c05f2/src/multiplayer/chatui.cpp#L881)
+### Frame Limiter
 
-### How to make translation work?
+To enable the frame limiter, you need to turn off V-Sync.
 
-Download the master.zip of ynotranslations and extract it:
-
-https://github.com/ynoproject/ynotranslations/archive/refs/heads/master.zip
-
-Find the folder as you need in the `ynotranslations`, then copy it to the game folder.
- Rename this copied folder as `Language` and restart the Player. After that, a new entry will appear in the game menu,
- enter and select language.
-
-If you want to lock the language, you can pass --language \<name\> to the Player, the name
- you want is in the Language folder.
-
-### How to limit the frame rate?
-
-To enable frame limiter requires to turn off V-Sync.
-
-For older laptops, it is recommended to limit the frame rate below 20fps
+For older laptops, it is recommended to limit the frame rate to below 20 fps
  to minimize fan noise.
 
 Press F1 -> Turn V-Sync Off -> Change Frame Limter to 20
 
-### Why doesn't Save Settings work?
+### Audio mute
 
-The Save Settings will not have any feedback when it is saved, but it outputs
- a log in the terminal with the path of config.ini. In fact, the settings are saved.
-
-Also, the multiplayer settings are included in the config.ini, i.e. you can use
- client commands without the arguments.
-
-### Is there a key to mute or unmute?
-
-Yes, you can press the M key to toggle mute on and off.
+Press the M key to toggle mute on and off.

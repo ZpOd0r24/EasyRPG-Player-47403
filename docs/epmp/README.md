@@ -2,11 +2,13 @@
 
 Some new features of EasyRPG Player, primarily for multiplayer.
 
+Web-based [multiplayer demo](https://yno.pages.dev).
+
 The first commit of EPMP is [44347b6](https://github.com/TsukiYumeRPG/EasyRPG-Player/commit/44347b6) (Initial commit. Add multiplayer changes), based on [ynoclient:cd7b46d](https://github.com/ynoproject/ynoengine/tree/cd7b46d) 2023-05-31.
 
 Not sure how to use it? You can refer to the [tutorial].
 
-If you are interested in this project, you can clone the repository to your local system to browse the code. If you don't know how to use Git, please refer to: [Git Manual](https://git-scm.com/book/en/v2).
+If you are interested in this project, you can clone the repository to your local system to browse the code. If you don't know how to use Git, refer to: [Git Manual](https://git-scm.com/book/en/v2).
 
 Remember to switch to the `dev` branch, as many updates will be submitted there first.
 
@@ -37,7 +39,7 @@ Remember to switch to the `dev` branch, as many updates will be submitted there 
 
 ### Additional thanks
 
-- [Jixun](https://github.com/jixunmoe) for helping in the C++ problems
+- [Jixun](https://github.com/jixunmoe) for helping in the C++ problems (Improvements to [forloop](https://github.com/TsukiYumeRPG/EasyRPG-Player/blob/0108483/src/multiplayer/game_multiplayer.cpp#L1333))
 - [Ratizux](https://github.com/Ratizux) for the podman suggestions
 - [Proselyte093](https://github.com/Proselyte093) for giving the project a chance to compile on the macOS ARM
 - AI for various types of knowledge
