@@ -1,6 +1,6 @@
 /*
  * EPMP
- * See: docs/LICENSE-EPMP.txt
+ * See: /docs/EPMP/license.txt
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -1669,6 +1669,7 @@ void ShowWelcome() {
 	PrintL("[F3]: ", "hide/show notifications.");
 	PrintL("[TAB]: ", "focus/unfocus.");
 	PrintL("[↑, ↓]: ", "scroll.");
+	PrintL("[SHIFT+↑]: ", "copy mode.");
 	PrintD("―――");
 	PrintD("v" + Version::GetVersionString(true, true));
 }
@@ -1714,9 +1715,9 @@ void ShowUsage(Strfnd& fnd) {
 		PrintD("- Enable TestPlay mode");
 	} else if (doc_name == "debugtextoverlay") {
 		PrintL("<..., !dto> ", "[player, p]");
-		PrintD("- Toggle player status");
+		PrintD("- Toggle player status overlay");
 		PrintL("<..., !dto> ", "<downloading, d>");
-		PrintD("- Toggle downloading status");
+		PrintD("- Toggle downloading status overlay");
 	} else {
 		PrintD("No entry for " + doc_name);
 	}
@@ -1816,9 +1817,7 @@ void Update() {
 
 	// Focus
 	if (Input::IsTriggered(Input::InputButton::TOGGLE_CHAT)) {
-		if (!Player::debug_flag || (Player::debug_flag
-				&& Input::IsKeyNotShared(Input::InputButton::TOGGLE_CHAT)))
-			SetFocus(true);
+		SetFocus(true);
 	} else if (Input::IsExternalTriggered(Input::InputButton::TOGGLE_CHAT) ||
 			Input::IsExternalTriggered(Input::InputButton::KEY_ESCAPE)) {
 		SetFocus(false);
@@ -1834,9 +1833,7 @@ void Update() {
 
 	// Toggle notification log
 	if (Input::IsTriggered(Input::InputButton::TOGGLE_NOTIFICATIONS)) {
-		if (!Player::debug_flag || (Player::debug_flag
-				&& Input::IsKeyNotShared(Input::InputButton::TOGGLE_NOTIFICATIONS)))
-			chat_box->ToggleNotificationLog();
+		chat_box->ToggleNotificationLog();
 	}
 
 	// Input and paste
