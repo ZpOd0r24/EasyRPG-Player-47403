@@ -1,0 +1,75 @@
+EPMP source code license
+------------------------
+GNU General Public License, version 3
+------------------------
+To clarify that contributions to EPMP are under the GPL license,
+ this document has been created to attempt to clarify the contributions of others
+Please let me know if there are any mistakes
+------------------------
+References:
+https://opensource.stackexchange.com/questions/13038/does-software-released-under-gplv3-require-a-copyright-notice
+https://opensource.stackexchange.com/questions/8308/license-but-no-copyright-notice-how-to-attribute-correctly
+https://www.gnu.org/licenses/license-list.html#AGPLv3.0
+
+/src/*.{cpp,h} modification
+---------------------------
+Refer to game_multiplayer.{cpp,h}
+
+server.{cpp,h}
+--------------
+Copyright (C) 2021-2025 Various developers and contributors
+--------------
+References: game_multiplayer.cpp, client_connection.cpp, and ynop-ynoserver
+--------------
+Contacts from Git history
+- twig33 (2021)
+- aleck099 <aleck099@outlook.com> (2022)
+- Flashfyre, Samuel H <flashfireex@gmail.com> (2022)
+- Monokotech (2023-2025)
+
+game_multiplayer.{cpp,h}
+------------------------
+Copyright (C) 2021-2025 Various developers and contributors
+------------------------
+Contacts from Git history
+- twig33 (2021)
+- JeDaYoshi <hi@jeda.im> (2021)
+- azarashi <azarashi@majestaria.fun> (2022)
+- Char0x61, CataractJustice (2022)
+- maru <maru@myyahoo.com> (2022)
+- kekami <kekami@kekami.dev> (2022)
+- aleck099 <aleck099@outlook.com> (2022)
+- Flashfyre, Samuel H <flashfireex@gmail.com> (2022)
+- Monokotech (2023-2025)
+
+nametag.{cpp,h}
+---------------
+Copyright (C) 2021-2024 Various developers and contributors
+---------------
+Contacts from Git history
+- Ghabry <gabriel+github@mastergk.de> (2021)
+- maru <maru@myyahoo.com> (2022)
+- Flashfyre, Samuel H <flashfireex@gmail.com> (2022)
+- Altiami (2023)
+- Monokotech (2024)
+
+game_playerother.h playerother.{cpp,h}
+messages.h packet.{cpp,h}
+connection.{cpp,h} client_connection.{cpp,h}
+--------------------------------------------
+Copyright (C) 2022-2025 Various developers and contributors
+--------------------------------------------
+Contacts from Git history
+- kekami <kekami@kekami.dev> (2022)
+- maru <maru@myyahoo.com> (2022)
+- aleck099 <aleck099@outlook.com> (2022)
+- Flashfyre, Samuel H <flashfireex@gmail.com> (2022)
+- Monokotech (2023-2025)
+
+chatui.{cpp,h}
+--------------
+Copyright (C) 2021-2025 Various developers and contributors
+--------------
+Contacts from Git history
+- Led, Biel Borel <ledgamedev@gmail.com> (2021)
+- Monokotech (2023-2025)
