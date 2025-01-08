@@ -25,6 +25,7 @@
 #include <mutex>
 #include "websocket.h"
 #include "uv.h"
+#include "ikcp.h"
 
 /**
  * DataHandler

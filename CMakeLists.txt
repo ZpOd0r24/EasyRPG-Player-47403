@@ -968,6 +968,27 @@ if(PLAYER_MULTIPLAYER)
 	target_link_libraries(${PROJECT_NAME} sodium)
 endif()
 
+if(PLAYER_MULTIPLAYER)
+	set(LIBKCP_PATH "${CMAKE_CURRENT_SOURCE_DIR}/lib/downloads/libkcp")
+	if(NOT EXISTS ${LIBKCP_PATH})
+		find_package(Git REQUIRED)
+		execute_process(COMMAND ${GIT_EXECUTABLE} clone "--depth=1"
+			"-c" "advice.detachedHead=false" "--branch"
+			"1.7"
+			"https://github.com/skywind3000/kcp"
+			"${LIBKCP_PATH}")
+		include(Patch)
+		execute_process(COMMAND ${PATCH_EXECUTABLE} -p1 -d "${LIBKCP_PATH}"
+			--input=${CMAKE_CURRENT_SOURCE_DIR}/patches/libkcp.patch )
+	endif()
+	function(add_kcp)
+		set(BUILD_TESTING OFF)
+		add_subdirectory(${LIBKCP_PATH})
+	endfunction()
+	add_kcp()
+	target_link_libraries(${PROJECT_NAME} kcp)
+endif()
+
 # Detect all required libraries
 player_find_package(NAME PNG TARGET PNG::PNG REQUIRED)
 player_find_package(NAME fmt TARGET fmt::fmt REQUIRED)

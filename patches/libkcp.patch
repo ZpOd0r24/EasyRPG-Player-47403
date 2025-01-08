@@ -1,0 +1,19 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index a3b12b4..6941fb7 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1,4 +1,4 @@
+-CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
++CMAKE_MINIMUM_REQUIRED(VERSION 3.16)
+ 
+ project(kcp LANGUAGES C)
+ 
+@@ -7,6 +7,8 @@ include(GNUInstallDirs)
+ 
+ add_library(kcp STATIC ikcp.c)
+ 
++target_include_directories(kcp INTERFACE $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>)
++
+ install(FILES ikcp.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+ 
+ install(TARGETS kcp
