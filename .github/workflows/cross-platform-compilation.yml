@@ -51,10 +51,10 @@ jobs:
             libfmt-dev
 
       - name: Clone Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         if: github.event.inputs.git-ref == ''
       - name: Clone Repository (with custom ref)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         if: github.event.inputs.git-ref != ''
         with:
           ref: ${{ github.event.inputs.git-ref }}
@@ -112,10 +112,10 @@ jobs:
         uses: ilammy/msvc-dev-cmd@release/v1
 
       - name: Clone Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         if: github.event.inputs.git-ref == ''
       - name: Clone Repository (with custom ref)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         if: github.event.inputs.git-ref != ''
         with:
           ref: ${{ github.event.inputs.git-ref }}
@@ -180,10 +180,10 @@ jobs:
           java-version: '17'
 
       - name: Clone Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         if: github.event.inputs.git-ref == ''
       - name: Clone Repository (with custom ref)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         if: github.event.inputs.git-ref != ''
         with:
           ref: ${{ github.event.inputs.git-ref }}
@@ -249,10 +249,10 @@ jobs:
 
     steps:
       - name: Clone Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         if: github.event.inputs.git-ref == ''
       - name: Clone Repository (with custom ref)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         if: github.event.inputs.git-ref != ''
         with:
           ref: ${{ github.event.inputs.git-ref }}
@@ -313,10 +313,10 @@ jobs:
 
     steps:
       - name: Clone Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         if: github.event.inputs.git-ref == ''
       - name: Clone Repository (with custom ref)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         if: github.event.inputs.git-ref != ''
         with:
           ref: ${{ github.event.inputs.git-ref }}
