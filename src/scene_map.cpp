@@ -16,15 +16,12 @@
  */
 
 // Headers
-#include "scene_gameover.h"
 #include "scene_map.h"
-#include "scene_menu.h"
 #include "scene_save.h"
 #include "scene_debug.h"
 #include "scene_settings.h"
 #include "main_data.h"
 #include "game_map.h"
-#include "game_actors.h"
 #include "game_message.h"
 #include "game_party.h"
 #include "game_player.h"
@@ -38,10 +35,7 @@
 #include "transition.h"
 #include "audio.h"
 #include "input.h"
-#include "screen.h"
-#include "scene_load.h"
-#include "output.h"
-#include "dynrpg.h"
+#include "game_dynrpg.h"
 
 using namespace std::chrono_literals;
 
@@ -84,7 +78,7 @@ void Scene_Map::Start() {
 		auto current_music = Main_Data::game_system->GetCurrentBGM();
 		Main_Data::game_system->BgmStop();
 		Main_Data::game_system->BgmPlay(current_music);
-		DynRpg::Load(from_save_id);
+		Main_Data::game_dynrpg->Load(from_save_id);
 	} else {
 		Game_Map::PlayBgm();
 	}
@@ -183,7 +177,8 @@ void Scene_Map::TransitionOut(SceneType next_scene) {
 
 	if (next_scene != Scene::Battle
 			&& next_scene != Scene::Debug
-			&& next_scene != Scene::Settings) {
+			&& next_scene != Scene::Settings
+			&& next_scene != Scene::LanguageMenu) {
 		screen_erased_by_event = false;
 	}
 
@@ -411,6 +406,14 @@ void Scene_Map::OnAsyncSuspend(F&& f, AsyncOp aop, bool is_preupdate) {
 		auto savefs = FileFinder::Save();
 		std::string save_name = Scene_Save::GetSaveFilename(savefs, aop.GetSaveSlot());
 		Player::LoadSavegame(save_name, aop.GetSaveSlot());
+	}
+
+	if (aop.GetType() == AsyncOp::eCloneMapEvent) {
+		Game_Map::CloneMapEvent(aop.GetMapId(), aop.GetSourceEventId(), aop.GetX(), aop.GetY(), aop.GetTargetEventId(), aop.GetEventName());
+	}
+
+	if (aop.GetType() == AsyncOp::eDestroyMapEvent) {
+		Game_Map::DestroyMapEvent(aop.GetTargetEventId());
 	}
 
 	auto& transition = Transition::instance();

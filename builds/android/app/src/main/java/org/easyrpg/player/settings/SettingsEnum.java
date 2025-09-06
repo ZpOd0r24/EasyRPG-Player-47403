@@ -22,13 +22,15 @@ enum SettingsEnum {
     MUSIC_VOLUME("MusicVolume"),
     SOUND_VOLUME("SoundVolume"),
     STRETCH("Stretch"),
+    FULLSCREEN("Fullscreen"),
     GAME_RESOLUTION("GameResolution"),
     SPEED_MODIFIER_A("SpeedModifierA"),
     FONT1_URI("Font1"),
     FONT2_URI("Font2"),
     FONT1_SIZE("Font1Size"),
-    FONT2_SIZE("Font2Size")
-
+    FONT2_SIZE("Font2Size"),
+    GAME_BROWSER_LABEL_MODE("GAME_BROWSER_LABEL_MODE"),
+    SHOW_AB_AS_ZX("SHOW_AB_AS_ZX")
     ;
 
 

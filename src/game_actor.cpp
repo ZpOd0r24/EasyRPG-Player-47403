@@ -34,6 +34,7 @@
 #include "attribute.h"
 #include "rand.h"
 #include "algo.h"
+#include "game_message_terms.h"
 #include "multiplayer/game_multiplayer.h"
 
 #if defined(_WIN32)
@@ -282,7 +283,7 @@ bool Game_Actor::LearnSkill(int skill_id, PendingMessage* pm) {
 		std::sort(data.skills.begin(), data.skills.end());
 
 		if (pm) {
-			pm->PushLine(GetLearningMessage(*skill));
+			pm->PushLine(ActorMessage::GetLearningMessage(*this, *skill));
 		}
 
 		return true;
@@ -798,48 +799,6 @@ void Game_Actor::SetLevel(int _level) {
 
 }
 
-std::string Game_Actor::GetLevelUpMessage(int new_level) const {
-	std::stringstream ss;
-	if (Player::IsRPG2k3E()) {
-		ss << GetName();
-		ss << " " << lcf::Data::terms.level_up << " ";
-		ss << " " << lcf::Data::terms.level << " " << new_level;
-		return ss.str();
-	} else if (Player::IsRPG2kE()) {
-		ss << new_level;
-		return Utils::ReplacePlaceholders(
-			lcf::Data::terms.level_up,
-			Utils::MakeArray('S', 'V', 'U'),
-			Utils::MakeSvArray(GetName(), ss.str(), lcf::Data::terms.level)
-		);
-	} else {
-		std::string particle, space = "";
-		if (Player::IsCP932()) {
-			particle = "は";
-			space += " ";
-		}
-		else {
-			particle = " ";
-		}
-		ss << GetName();
-		ss << particle << lcf::Data::terms.level << " ";
-		ss << new_level << space << lcf::Data::terms.level_up;
-		return ss.str();
-	}
-}
-
-std::string Game_Actor::GetLearningMessage(const lcf::rpg::Skill& skill) const {
-	if (Player::IsRPG2kE()) {
-		return Utils::ReplacePlaceholders(
-			lcf::Data::terms.skill_learned,
-			Utils::MakeArray('S', 'O'),
-			Utils::MakeSvArray(GetName(), skill.name)
-		);
-	}
-
-	return ToString(skill.name) + (Player::IsRPG2k3E() ? " " : "") + ToString(lcf::Data::terms.skill_learned);
-}
-
 void Game_Actor::ChangeLevel(int new_level, PendingMessage* pm) {
 	int old_level = GetLevel();
 	SetLevel(new_level);
@@ -847,7 +806,7 @@ void Game_Actor::ChangeLevel(int new_level, PendingMessage* pm) {
 
 	if (new_level > old_level) {
 		if (pm) {
-			pm->PushLine(GetLevelUpMessage(new_level));
+			pm->PushLine(ActorMessage::GetLevelUpMessage(*this, new_level));
 		}
 
 		// Learn new skills
@@ -914,8 +873,8 @@ Point Game_Actor::GetOriginalPosition() const {
 	return { dbActor->battle_x, dbActor->battle_y };
 }
 
-StringView Game_Actor::GetSkillName() const {
-	return dbActor->rename_skill ? StringView(dbActor->skill_name) : StringView(lcf::Data::terms.command_skill);
+std::string_view Game_Actor::GetSkillName() const {
+	return dbActor->rename_skill ? std::string_view(dbActor->skill_name) : std::string_view(lcf::Data::terms.command_skill);
 }
 
 void Game_Actor::SetSprite(const std::string &file, int index, bool transparent) {
@@ -1120,7 +1079,7 @@ void Game_Actor::ChangeClass(int new_class_id,
 
 	SetLevel(new_level);
 	if (pm && new_level > 1 && (new_level > prev_level || new_skill != eSkillNoChange)) {
-		pm->PushLine(GetLevelUpMessage(new_level));
+		pm->PushLine(ActorMessage::GetLevelUpMessage(*this, new_level));
 	}
 
 	// RPG_RT always resets EXP when class is changed, even if level unchanged.
@@ -1152,7 +1111,7 @@ void Game_Actor::ChangeClass(int new_class_id,
 	}
 }
 
-StringView Game_Actor::GetClassName() const {
+std::string_view Game_Actor::GetClassName() const {
 	if (!GetClass()) {
 		return {};
 	}

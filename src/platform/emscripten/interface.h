@@ -27,8 +27,9 @@ public:
     static void UploadSoundfont();
     static void UploadFont();
     static void RefreshScene();
-	static void TakeScreenshot();
+	static void TakeScreenshot(bool is_auto_screenshot = false);
 	static void Reset();
+	static bool ResetCanvas();
 
 	// IME & Clipboard support
 	static void StartTextInput();

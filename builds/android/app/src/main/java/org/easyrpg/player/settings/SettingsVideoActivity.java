@@ -7,13 +7,14 @@ import android.widget.RadioButton;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import org.easyrpg.player.BaseActivity;
 import org.easyrpg.player.R;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class SettingsVideoActivity extends AppCompatActivity implements View.OnClickListener {
+public class SettingsVideoActivity extends BaseActivity implements View.OnClickListener {
     List<RadioButton> imageSizeRadioButtonList;
     List<RadioButton> gameResolutionRadioButtonList;
 
@@ -22,9 +23,11 @@ public class SettingsVideoActivity extends AppCompatActivity implements View.OnC
         super.onCreate(savedInstanceState);
         this.setContentView(R.layout.activity_settings_video);
 
-        SettingsManager.init(getApplicationContext());
-
         // Setting UI components
+        CheckBox fullscreenCheckbox = findViewById(R.id.fullscreen_mode);
+        fullscreenCheckbox.setChecked(SettingsManager.isFullscreen());
+        fullscreenCheckbox.setOnClickListener(this);
+
         CheckBox forceLandscapeModeCheckbox = findViewById(R.id.force_landscape_mode);
         forceLandscapeModeCheckbox.setChecked(SettingsManager.isForcedLandscape());
         forceLandscapeModeCheckbox.setOnClickListener(this);
@@ -68,6 +71,10 @@ public class SettingsVideoActivity extends AppCompatActivity implements View.OnC
 
     @Override
     public void onClick(View v) {
+        if (v.getId() == R.id.fullscreen_mode) {
+            SettingsManager.setFullscreen(((CheckBox)v).isChecked());
+        }
+
         if (v.getId() == R.id.force_landscape_mode) {
             SettingsManager.setForcedLandscape(((CheckBox)v).isChecked());
         }

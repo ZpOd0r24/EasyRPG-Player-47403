@@ -468,7 +468,7 @@ Point Input::GetMousePosition() {
 	return source->GetMousePosition();
 }
 
-void Input::AddRecordingData(Input::RecordingData type, StringView data) {
+void Input::AddRecordingData(Input::RecordingData type, std::string_view data) {
 	assert(source);
 	source->AddRecordingData(type, data);
 }
@@ -498,3 +498,27 @@ void Input::ResetMask() {
 	SetMask(source->GetMask());
 }
 
+void Input::SimulateButtonPress(Input::InputButton button) {
+	switch (button) {
+		case Input::UP:
+		case Input::DOWN:
+		case Input::LEFT:
+		case Input::RIGHT:
+		{
+			// Directional movement has its own input handling
+			// These buttons need to be simulated on a lower level,
+			// or else those movement actions will be overwritten
+			auto& cfg = source->GetConfig();
+			for (auto& bm : cfg.buttons) {
+				if (bm.first == button) {
+					source->SimulateKeyPress(bm.second);
+					break;
+				}
+			}
+			break;
+		}
+		default:
+			break;
+	}
+	UpdateButton(button, true);
+}

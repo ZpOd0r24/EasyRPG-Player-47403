@@ -3,20 +3,26 @@ package org.easyrpg.player;
 import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.Intent;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.Insets;
 import android.graphics.Paint;
 import android.graphics.Paint.Style;
 import android.graphics.Point;
 import android.net.Uri;
+import android.os.Build;
 import android.os.ParcelFileDescriptor;
 import android.provider.DocumentsContract;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.WindowInsets;
+import android.widget.Button;
 import android.widget.RelativeLayout;
 import android.widget.RelativeLayout.LayoutParams;
 
@@ -65,17 +71,41 @@ public class Helper {
 	 *            Y position from 0 to 1
 	 */
 	public static void setLayoutPosition(Activity a, View view, double x, double y) {
-		DisplayMetrics displayMetrics = a.getResources().getDisplayMetrics();
-		float screenWidthDp = displayMetrics.widthPixels / displayMetrics.density;
-		float screenHeightDp = displayMetrics.heightPixels / displayMetrics.density;
+        int padW = 0;
+        int padH = 0;
 
-		RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(LayoutParams.WRAP_CONTENT,
-				LayoutParams.WRAP_CONTENT);
+        // Consider the display cut out when calculating the button position to avoid that they are
+        // rendered out of bounds.
+        // Starting from Android 15 (SDK35) the reported display metrics are of the entire screen
+        // including the system bar but our activity has insets configured
+        // Substract the size of the display cutout to prevent that our buttons are displayed out of
+        // bounds.
+        if (Build.VERSION.SDK_INT >= 35) {
+            WindowInsets insets = a.getWindow().getDecorView().getRootWindowInsets();
+            if (insets != null) {
+                Insets systemBar = insets.getInsets(WindowInsets.Type.displayCutout());
 
-		params.leftMargin = Helper.getPixels(a, screenWidthDp * x);
-		params.topMargin = Helper.getPixels(a, screenHeightDp * y);
+                padW = systemBar.left + systemBar.right;
+                padH = systemBar.top + systemBar.bottom;
+            }
+        }
 
-		view.setLayoutParams(params);
+        DisplayMetrics displayMetrics = a.getResources().getDisplayMetrics();
+        float screenWidthDp = (displayMetrics.widthPixels) / displayMetrics.density;
+        float screenHeightDp = (displayMetrics.heightPixels) / displayMetrics.density;
+
+        float screenWidthDpFit = (displayMetrics.widthPixels - padW) / displayMetrics.density;
+        float screenHeightDpFit = (displayMetrics.heightPixels - padH) / displayMetrics.density;
+
+        float widthRatio = screenWidthDpFit / screenWidthDp;
+        float heightRatio = screenHeightDpFit / screenHeightDp;
+
+        RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+
+        params.leftMargin = Helper.getPixels(a, screenWidthDpFit * x * widthRatio);
+        params.topMargin = Helper.getPixels(a, screenHeightDpFit * y * heightRatio);
+
+        view.setLayoutParams(params);
 	}
 
     public static Paint getUIPainter() {
@@ -288,6 +318,10 @@ public class Helper {
     }
 
     public static DocumentFile getFileFromURI (Context context, Uri fileURI) {
+        if (fileURI == null) {
+            return null;
+        }
+
         try {
             return DocumentFile.fromTreeUri(context, fileURI);
         } catch (Exception e) {
@@ -352,4 +386,41 @@ public class Helper {
         return bitmap;
     }
 
+    public static void attachOpenFolderButton(Context context, Button button, Uri uri) {
+        if (android.os.Build.VERSION.SDK_INT >= 26) {
+            button.setOnClickListener(v -> {
+                openFileBrowser(context, uri);
+            });
+        } else {
+            // ACTION_OPEN_DOCUMENT does not support providing an URI
+            // Useless, remove the button
+            ViewGroup layout = (ViewGroup) button.getParent();
+            if(layout != null) {
+                layout.removeView(button);
+            }
+        }
+    }
+
+    public static boolean openFileBrowser(Context context, Uri uri) {
+        if (android.os.Build.VERSION.SDK_INT >= 29) {
+            // Open the file explorer in the folder specified by URI
+            // This opens a real file browser which allows file operations like view, copy, etc.
+            Intent intent = new Intent(Intent.ACTION_VIEW);
+            intent.setDataAndType(uri, DocumentsContract.Document.MIME_TYPE_DIR);
+            context.startActivity(intent);
+        } else if (android.os.Build.VERSION.SDK_INT >= 26) {
+            // Open the file explorer in the folder specified by URI
+            // This opens a (useless) file chooser which closes itself after selecting a file
+            // Still better than nothing because the user can see where the folder is
+            Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+            intent.setType("*/*");
+            intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, uri);
+            context.startActivity(intent);
+        } else {
+            // ACTION_OPEN_DOCUMENT does not support providing an URI
+            return false;
+        }
+
+        return true;
+    }
 }

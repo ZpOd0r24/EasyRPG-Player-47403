@@ -49,7 +49,7 @@ Game_Event::Game_Event(int map_id, const lcf::rpg::Event* event) :
 }
 
 void Game_Event::SanitizeData() {
-	StringView name = event->name;
+	std::string_view name = event->name;
 	Game_Character::SanitizeData(name);
 	if (page != nullptr) {
 		SanitizeMoveRoute(name, page->move_route, data()->original_move_route_index, "original_move_route_index");
@@ -298,7 +298,7 @@ int Game_Event::GetId() const {
 	return data()->ID;
 }
 
-StringView Game_Event::GetName() const {
+std::string_view Game_Event::GetName() const {
 	return event->name;
 }
 
@@ -591,7 +591,7 @@ AsyncOp Game_Event::Update(bool resume_async) {
 	// the wait will tick by 1 each time the interpreter is invoked.
 	if ((resume_async || GetTrigger() == lcf::rpg::EventPage::Trigger_parallel) && interpreter) {
 		if (!interpreter->IsRunning() && page && !page->event_commands.empty()) {
-			interpreter->Push(this);
+			interpreter->Push<InterpreterExecutionType::Parallel>(this);
 		}
 		interpreter->Update(!resume_async);
 

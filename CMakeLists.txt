@@ -1,6 +1,6 @@
-cmake_minimum_required(VERSION 3.16...3.28 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.18...3.31 FATAL_ERROR)
 
-project(EasyRPG_Player VERSION 0.8
+project(EasyRPG_Player VERSION 0.8.1
 	DESCRIPTION "Interpreter for RPG Maker 2000/2003 games"
 	HOMEPAGE_URL "https://easyrpg.org"
 	LANGUAGES CXX)
@@ -15,7 +15,13 @@ include(PlayerMisc)
 include(GetGitRevisionDescription)
 
 # Dependencies provided by CMake Presets
+option(PLAYER_FIND_ROOT_PATH_APPEND
+	"Append CMAKE_PREFIX_PATH to CMAKE_FIND_ROOT_PATH. Works around problematic CMake Toolchain files" OFF)
+
 list(APPEND CMAKE_PREFIX_PATH "${PLAYER_PREFIX_PATH_APPEND}")
+if(PLAYER_FIND_ROOT_PATH_APPEND)
+	list(APPEND CMAKE_FIND_ROOT_PATH "${CMAKE_PREFIX_PATH}")
+endif()
 
 # C++17 is required
 set(CMAKE_CXX_STANDARD 17)
@@ -32,7 +38,10 @@ if(NOT BUILD_CLIENT AND NOT BUILD_SERVER)
 	set(BUILD_CLIENT on)
 endif()
 
-option(CMAKE_FIND_PACKAGE_PREFER_CONFIG "Prefer config files over bundled FindXXX files. Set this to OFF when configuration fails and report a bug." ON)
+option(CMAKE_FIND_PACKAGE_PREFER_CONFIG
+	"Prefer config files over bundled FindXXX files. Set this to OFF when configuration fails and report a bug." ON)
+
+option(PLAYER_NONFREE "For commercial usage disable libraries and fonts that are licensed under (L)GPL." OFF)
 
 # Source Files
 add_library(${PROJECT_NAME} OBJECT
@@ -71,8 +80,6 @@ add_library(${PROJECT_NAME} OBJECT
 	src/baseui.h
 	src/battle_animation.cpp
 	src/battle_animation.h
-	src/battle_message.cpp
-	src/battle_message.h
 	src/bitmap.cpp
 	src/bitmapfont.h
 	src/bitmapfont_glyph.h
@@ -80,6 +87,7 @@ add_library(${PROJECT_NAME} OBJECT
 	src/bitmap_hslrgb.h
 	src/cache.cpp
 	src/cache.h
+	src/callback.h
 	src/cmdline_parser.cpp
 	src/cmdline_parser.h
 	src/color.h
@@ -109,8 +117,6 @@ add_library(${PROJECT_NAME} OBJECT
 	src/drawable_list.h
 	src/drawable_mgr.cpp
 	src/drawable_mgr.h
-	src/dynrpg.cpp
-	src/dynrpg.h
 	src/dynrpg_easyrpg.cpp
 	src/dynrpg_easyrpg.h
 	src/dynrpg_textplugin.cpp
@@ -170,6 +176,10 @@ add_library(${PROJECT_NAME} OBJECT
 	src/game_config.h
 	src/game_config_game.cpp
 	src/game_config_game.h
+	src/game_destiny.cpp
+	src/game_destiny.h
+	src/game_dynrpg.cpp
+	src/game_dynrpg.h
 	src/game_enemy.cpp
 	src/game_enemy.h
 	src/game_enemyparty.cpp
@@ -182,6 +192,8 @@ add_library(${PROJECT_NAME} OBJECT
 	src/game_interpreter_battle.h
 	src/game_interpreter_control_variables.cpp
 	src/game_interpreter_control_variables.h
+	src/game_interpreter_debug.cpp
+	src/game_interpreter_debug.h
 	src/game_interpreter.cpp
 	src/game_interpreter.h
 	src/game_interpreter_map.cpp
@@ -192,6 +204,8 @@ add_library(${PROJECT_NAME} OBJECT
 	src/game_map.h
 	src/game_message.cpp
 	src/game_message.h
+	src/game_message_terms.cpp
+	src/game_message_terms.h
 	src/game_party_base.cpp
 	src/game_party_base.h
 	src/game_party.cpp
@@ -200,6 +214,8 @@ add_library(${PROJECT_NAME} OBJECT
 	src/game_pictures.h
 	src/game_player.cpp
 	src/game_player.h
+	src/game_runtime_patches.cpp
+	src/game_runtime_patches.h
 	src/game_quit.cpp
 	src/game_quit.h
 	src/game_screen.cpp
@@ -218,6 +234,7 @@ add_library(${PROJECT_NAME} OBJECT
 	src/game_vehicle.h
 	src/game_windows.cpp
 	src/game_windows.h
+	src/generated/bitmapfont_baekmuk.h
 	src/generated/bitmapfont_rmg2000.h
 	src/generated/bitmapfont_ttyp0.h
 	src/generated/bitmapfont_wqy.h
@@ -244,6 +261,8 @@ add_library(${PROJECT_NAME} OBJECT
 	src/input_source.h
 	src/instrumentation.cpp
 	src/instrumentation.h
+	src/json_helper.cpp
+	src/json_helper.h
 	src/keys.h
 	src/main_data.cpp
 	src/main_data.h
@@ -308,6 +327,8 @@ add_library(${PROJECT_NAME} OBJECT
 	src/scene_import.h
 	src/scene_item.cpp
 	src/scene_item.h
+	src/scene_language.cpp
+	src/scene_language.h
 	src/scene_load.cpp
 	src/scene_load.h
 	src/scene_logo.cpp
@@ -398,8 +419,6 @@ add_library(${PROJECT_NAME} OBJECT
 	src/window_actortarget.h
 	src/window_base.cpp
 	src/window_base.h
-	src/window_battlecommand.cpp
-	src/window_battlecommand.h
 	src/window_battlemessage.cpp
 	src/window_battlemessage.h
 	src/window_battlestatus.cpp
@@ -543,7 +562,7 @@ add_library(${PROJECT_NAME}_server OBJECT
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 # Optimize floating point math functions into intrinsics and don't check or set errno (i.e. sqrt(-1))
-if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
 	target_compile_options(${PROJECT_NAME} PUBLIC "-fno-math-errno")
 endif()
 
@@ -616,14 +635,15 @@ elseif(NINTENDO_SWITCH)
 elseif(VITA)
 	set(PLAYER_TARGET_PLATFORM "psvita" CACHE STRING "Platform to compile for.")
 elseif(NINTENDO_WII)
-	set(PLAYER_TARGET_PLATFORM "wii" CACHE STRING "Platform to compile for.")
+	set(PLAYER_TARGET_PLATFORM "SDL2" CACHE STRING "Platform to compile for. Options: SDL2 SDL1")
+	set_property(CACHE PLAYER_TARGET_PLATFORM PROPERTY STRINGS SDL2 SDL1)
 elseif(NINTENDO_WIIU)
 	set(PLAYER_TARGET_PLATFORM "SDL2" CACHE STRING "Platform to compile for.")
 elseif(AMIGA)
 	set(PLAYER_TARGET_PLATFORM "SDL1" CACHE STRING "Platform to compile for.")
 else()
-	set(PLAYER_TARGET_PLATFORM "SDL2" CACHE STRING "Platform to compile for. Options: SDL2 SDL1 libretro")
-	set_property(CACHE PLAYER_TARGET_PLATFORM PROPERTY STRINGS SDL2 SDL1 libretro)
+	set(PLAYER_TARGET_PLATFORM "SDL2" CACHE STRING "Platform to compile for. Options: SDL3 SDL2 SDL1 libretro")
+	set_property(CACHE PLAYER_TARGET_PLATFORM PROPERTY STRINGS SDL3 SDL2 SDL1 libretro)
 endif()
 set(PLAYER_BUILD_EXECUTABLE ON)
 set(PLAYER_TEST_LIBRARIES ${PROJECT_NAME})
@@ -642,14 +662,29 @@ if(ANDROID AND PLAYER_GRADLE_BUILD)
 	# Ugly: Gradle has no way to branch based on the ABI
 	# Inject correct search path based on PLAYER_ANDROID_TOOLCHAIN_PATH
 	foreach(f ${PLAYER_ANDROID_TOOLCHAIN_PATH})
-		list(APPEND CMAKE_FIND_ROOT_PATH "${f}/${ANDROID_ABI}-toolchain")
+		list(APPEND CMAKE_FIND_ROOT_PATH "${f}/${CMAKE_ANDROID_ARCH_ABI}-toolchain")
 	endforeach(f)
 endif()
 
-if(${PLAYER_TARGET_PLATFORM} STREQUAL "SDL2")
+if(APPLE AND NOT IOS AND NOT CMAKE_SYSTEM_NAME STREQUAL "tvOS")
+	set(MACOS TRUE)
+endif()
+
+if(PLAYER_TARGET_PLATFORM STREQUAL "SDL3")
 	target_sources(${PROJECT_NAME} PRIVATE
-		src/platform/sdl/sdl_audio.cpp
-		src/platform/sdl/sdl_audio.h
+		src/platform/sdl/sdl3_ui.cpp
+		src/platform/sdl/sdl3_ui.h)
+	target_compile_definitions(${PROJECT_NAME} PUBLIC USE_SDL=3)
+
+	player_find_package(NAME SDL3
+		TARGET SDL3::SDL3
+		REQUIRED)
+
+	if(ANDROID)
+		set(PLAYER_BUILD_EXECUTABLE OFF)
+	endif()
+elseif(PLAYER_TARGET_PLATFORM STREQUAL "SDL2")
+	target_sources(${PROJECT_NAME} PRIVATE
 		src/platform/sdl/sdl2_ui.cpp
 		src/platform/sdl/sdl2_ui.h)
 	target_compile_definitions(${PROJECT_NAME} PUBLIC USE_SDL=2)
@@ -657,7 +692,7 @@ if(${PLAYER_TARGET_PLATFORM} STREQUAL "SDL2")
 	# SDL2 depends on some systems on SDL2::SDL2main but SDL2::SDL2 is not always a dependency of it
 	# Manually add the dependencies
 	player_find_package(NAME SDL2
-		VERSION 2.0.5
+		VERSION 2.0.14
 		TARGET SDL2::SDL2
 		REQUIRED)
 
@@ -667,9 +702,12 @@ if(${PLAYER_TARGET_PLATFORM} STREQUAL "SDL2")
 
 	if(ANDROID)
 		set(PLAYER_BUILD_EXECUTABLE OFF)
-	endif()
-
-	if(NINTENDO_WIIU)
+	elseif(NINTENDO_WII)
+		target_compile_definitions(${PROJECT_NAME} PUBLIC PLAYER_NINTENDO)
+		target_sources(${PROJECT_NAME} PRIVATE
+			src/platform/wii/clock.h
+			src/platform/wii/input_buttons.cpp)
+	elseif(NINTENDO_WIIU)
 		target_compile_definitions(${PROJECT_NAME} PUBLIC PLAYER_NINTENDO)
 		target_sources(${PROJECT_NAME} PRIVATE
 			src/platform/wiiu/main.h
@@ -679,22 +717,31 @@ if(${PLAYER_TARGET_PLATFORM} STREQUAL "SDL2")
 	if(WIN32)
 		target_link_libraries(${PROJECT_NAME} "Dwmapi")
 	endif()
-elseif(${PLAYER_TARGET_PLATFORM} STREQUAL "SDL1")
+elseif(PLAYER_TARGET_PLATFORM STREQUAL "SDL1")
+	if(NINTENDO_WII)
+		find_package(SDL REQUIRED)
+		target_compile_definitions(${PROJECT_NAME} PUBLIC PLAYER_NINTENDO)
+		target_include_directories(${PROJECT_NAME} PUBLIC ${SDL_INCLUDE_DIR})
+		target_sources(${PROJECT_NAME} PRIVATE
+			src/platform/wii/clock.h
+			src/platform/wii/input_buttons.cpp)
+	else()
+		player_find_package(NAME SDL1 TARGET SDL::SDLmain REQUIRED)
+	endif()
+
 	target_sources(${PROJECT_NAME} PRIVATE
-		src/platform/sdl/sdl_audio.cpp
-		src/platform/sdl/sdl_audio.h
 		src/platform/sdl/axis.h
 		src/platform/sdl/sdl_ui.cpp
 		src/platform/sdl/sdl_ui.h)
-	target_compile_definitions(${PROJECT_NAME} PUBLIC USE_SDL=1)
-
-	player_find_package(NAME SDL1 TARGET SDL::SDLmain REQUIRED)
-elseif(${PLAYER_TARGET_PLATFORM} STREQUAL "libretro")
+	target_compile_definitions(${PROJECT_NAME} PUBLIC
+		USE_SDL=1
+		EASYRPG_CONFIG_NAME="config_sdl1.ini")
+elseif(PLAYER_TARGET_PLATFORM STREQUAL "libretro")
 	target_compile_definitions(${PROJECT_NAME} PUBLIC PLAYER_UI=LibretroUi USE_LIBRETRO=1)
 	set(PLAYER_BUILD_EXECUTABLE OFF)
 	add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/builds/libretro)
 	target_link_libraries(${PROJECT_NAME} retro_common)
-elseif(${PLAYER_TARGET_PLATFORM} STREQUAL "3ds")
+elseif(PLAYER_TARGET_PLATFORM STREQUAL "3ds")
 	target_compile_definitions(${PROJECT_NAME} PUBLIC PLAYER_UI=CtrUi PLAYER_NINTENDO)
 	target_compile_options(${PROJECT_NAME} PUBLIC -Wno-psabi) # Remove abi warning after devkitarm ships newer gcc
 	# generate gfx assets
@@ -718,25 +765,23 @@ elseif(${PLAYER_TARGET_PLATFORM} STREQUAL "3ds")
 		$<TARGET_OBJECTS:3ds-assets> PRIVATE
 		src/platform/3ds/audio.cpp
 		src/platform/3ds/audio.h
-		src/platform/3ds/clock.cpp
 		src/platform/3ds/clock.h
 		src/platform/3ds/input_buttons.cpp
 		src/platform/3ds/ui.cpp
 		src/platform/3ds/ui.h)
 	target_link_libraries(${PROJECT_NAME} 3ds-assets)
-elseif(${PLAYER_TARGET_PLATFORM} STREQUAL "psvita")
+elseif(PLAYER_TARGET_PLATFORM STREQUAL "psvita")
 	include("$ENV{VITASDK}/share/vita.cmake" REQUIRED)
 	target_compile_definitions(${PROJECT_NAME} PUBLIC PLAYER_UI=Psp2Ui)
 	target_compile_options(${PROJECT_NAME} PUBLIC -Wno-psabi) # Remove abi warning after vitasdk ships newer gcc
 	target_sources(${PROJECT_NAME} PRIVATE
 		src/platform/psvita/audio.cpp
 		src/platform/psvita/audio.h
-		src/platform/psvita/clock.cpp
 		src/platform/psvita/clock.h
 		src/platform/psvita/input_buttons.cpp
 		src/platform/psvita/ui.cpp
 		src/platform/psvita/ui.h)
-elseif(${PLAYER_TARGET_PLATFORM} STREQUAL "switch")
+elseif(PLAYER_TARGET_PLATFORM STREQUAL "switch")
 	target_compile_definitions(${PROJECT_NAME} PUBLIC PLAYER_UI=NxUi PLAYER_NINTENDO)
 	find_package(OpenGL CONFIG REQUIRED)
 	find_library(GLAD glad REQUIRED)
@@ -749,36 +794,88 @@ elseif(${PLAYER_TARGET_PLATFORM} STREQUAL "switch")
 		$<TARGET_OBJECTS:switch-assets> PRIVATE
 		src/platform/switch/audio.cpp
 		src/platform/switch/audio.h
-		src/platform/switch/clock.cpp
 		src/platform/switch/clock.h
 		src/platform/switch/input_buttons.cpp
 		src/platform/switch/ui.cpp
 		src/platform/switch/ui.h)
 	target_link_libraries(${PROJECT_NAME} switch-assets)
-elseif(${PLAYER_TARGET_PLATFORM} STREQUAL "wii")
-	find_package(SDL REQUIRED)
-	target_compile_definitions(${PROJECT_NAME} PUBLIC USE_SDL=1 PLAYER_NINTENDO)
-	target_include_directories(${PROJECT_NAME} PUBLIC ${SDL_INCLUDE_DIR})
+endif()
+
+# Sound system to use
+if(PLAYER_TARGET_PLATFORM STREQUAL "SDL3")
+	set(PLAYER_AUDIO_BACKEND "SDL3" CACHE STRING "Audio system to use. Options: SDL3 OFF")
+	set_property(CACHE PLAYER_AUDIO_BACKEND PROPERTY STRINGS SDL3 OFF)
+elseif(PLAYER_TARGET_PLATFORM STREQUAL "SDL2")
+	if(NINTENDO_WII)
+		set(PLAYER_AUDIO_BACKEND "SDL2" CACHE STRING "Audio system to use. Options: SDL2 AESND OFF")
+		set_property(CACHE PLAYER_AUDIO_BACKEND PROPERTY STRINGS SDL2 AESND OFF)
+	else()
+		set(PLAYER_AUDIO_BACKEND "SDL2" CACHE STRING "Audio system to use. Options: SDL2 OFF")
+		set_property(CACHE PLAYER_AUDIO_BACKEND PROPERTY STRINGS SDL2 OFF)
+	endif()
+elseif(PLAYER_TARGET_PLATFORM STREQUAL "SDL1")
+	if(NINTENDO_WII)
+		set(PLAYER_AUDIO_BACKEND "AESND" CACHE STRING "Audio system to use. Options: SDL1 AESND OFF")
+		set_property(CACHE PLAYER_AUDIO_BACKEND PROPERTY STRINGS SDL1 AESND OFF)
+	else()
+		set(PLAYER_AUDIO_BACKEND "SDL1" CACHE STRING "Audio system to use. Options: SDL1 OFF")
+		set_property(CACHE PLAYER_AUDIO_BACKEND PROPERTY STRINGS SDL1 OFF)
+	endif()
+else()
+	# Assuming that all platforms not targeting SDL have only one audio backend
+	set(PLAYER_AUDIO_BACKEND ${PLAYER_TARGET_PLATFORM} CACHE STRING
+		"Audio system to use. Options: ${PLAYER_TARGET_PLATFORM} OFF")
+	set_property(CACHE PLAYER_AUDIO_BACKEND PROPERTY STRINGS ${PLAYER_TARGET_PLATFORM} OFF)
+endif()
+
+set(PLAYER_HAS_AUDIO ON)
+if(PLAYER_AUDIO_BACKEND STREQUAL "SDL3")
+	target_sources(${PROJECT_NAME} PRIVATE
+		src/platform/sdl/sdl3_audio.cpp
+		src/platform/sdl/sdl3_audio.h)
+elseif(PLAYER_AUDIO_BACKEND STREQUAL "SDL2")
+	target_sources(${PROJECT_NAME} PRIVATE
+		src/platform/sdl/sdl2_audio.cpp
+		src/platform/sdl/sdl2_audio.h)
+elseif(PLAYER_AUDIO_BACKEND STREQUAL "SDL1")
+	target_sources(${PROJECT_NAME} PRIVATE
+		src/platform/sdl/sdl_audio.cpp
+		src/platform/sdl/sdl_audio.h)
+elseif(PLAYER_AUDIO_BACKEND STREQUAL "AESND")
 	target_sources(${PROJECT_NAME} PRIVATE
 		src/platform/wii/audio.cpp
-		src/platform/wii/audio.h
-		src/platform/wii/clock.cpp
-		src/platform/wii/clock.h
-		src/platform/wii/input_buttons.cpp
-		src/platform/sdl/axis.h
-		src/platform/sdl/sdl_ui.cpp
-		src/platform/sdl/sdl_ui.h)
+		src/platform/wii/audio.h)
+	target_compile_definitions(${PROJECT_NAME} PUBLIC AUDIO_AESND=1)
+elseif(PLAYER_AUDIO_BACKEND STREQUAL ${PLAYER_TARGET_PLATFORM})
+
+elseif(PLAYER_AUDIO_BACKEND STREQUAL "OFF")
+	set(PLAYER_HAS_AUDIO OFF)
+else()
+	message(FATAL_ERROR "Invalid Audio Backend ${PLAYER_AUDIO_BACKEND}\nOptions: ${AUDIO_PROP}")
+endif()
+
+get_property(AUDIO_PROP CACHE PLAYER_AUDIO_BACKEND PROPERTY STRINGS)
+if(NOT PLAYER_AUDIO_BACKEND IN_LIST AUDIO_PROP)
+	message(FATAL_ERROR
+		"Incompatible audio backend ${PLAYER_AUDIO_BACKEND}.\nPlease clear the CMake cache.\nOptions: ${AUDIO_PROP}")
 endif()
 
 # Shared by homebrew platforms
-if(${PLAYER_TARGET_PLATFORM} MATCHES "^(3ds|psvita|switch|wii)$" OR NINTENDO_WIIU)
+if(NINTENDO_3DS OR NINTENDO_WII OR NINTENDO_WIIU OR NINTENDO_WIIU OR NINTENDO_SWITCH OR VITA)
 	target_compile_options(${PROJECT_NAME} PUBLIC -fno-exceptions -fno-rtti)
+	if(VITA)
+		# This optimisation is unstable on Vita (crashes at the end of MainLoop)
+		target_compile_options(${PROJECT_NAME} PUBLIC -fno-optimize-sibling-calls)
+	endif()
 	set(CMAKE_DL_LIBS "") # hack4icu!
 	set(PLAYER_ENABLE_TESTS OFF)
 	option(PLAYER_VERSIONED_PACKAGES "Create zip packages with versioned name (for internal use)" ON)
+	set(PLAYER_CONSOLE_PORT ON)
+else()
+	set(PLAYER_CONSOLE_PORT OFF)
 endif()
 # Make content available (romfs/wuhb bundle)
-if(${PLAYER_TARGET_PLATFORM} MATCHES "^(3ds|switch)$" OR NINTENDO_WIIU)
+if(NINTENDO_3DS OR NINTENDO_WIIU OR NINTENDO_SWITCH)
 	option(PLAYER_BUNDLE "Embed a directory in the executable" OFF)
 	set(PLAYER_BUNDLE_PATH "content" CACHE PATH "Directory to include in executable")
 	set(BUNDLE_ARG "_IGNORE_ME")
@@ -802,8 +899,7 @@ if(AMIGA)
 		target_sources(${PROJECT_NAME} PRIVATE
 			src/platform/morphos/integration.cpp)
 		set_property(SOURCE src/platform/morphos/integration.cpp
-			PROPERTY COMPILE_DEFINITIONS PLAYER_VERSION="${PLAYER_VERSION_FULL}"
-		)
+			PROPERTY COMPILE_DEFINITIONS PLAYER_VERSION="${PLAYER_VERSION_FULL}")
 	endif()
 	if(AMIGAOS4)
 		# FIXME: needed?
@@ -842,26 +938,32 @@ if(APPLE)
 	enable_language(OBJCXX)
 	target_sources(${PROJECT_NAME} PRIVATE
 		src/platform/macos/macos_utils.mm
-		src/platform/macos/macos_utils.h
-		src/platform/macos/midiout_device_coreaudio.cpp
-		src/platform/macos/midiout_device_coreaudio.h)
+		src/platform/macos/macos_utils.h)
 
-	find_library(MACOSFOUNDATION Foundation)
-	find_Library(MACOSAUDIOUNIT AudioUnit)
-	find_library(MACOSAUDIOTOOLBOX AudioToolbox)
+	if(MACOS)
+		find_library(MACOSAUDIOUNIT AudioUnit REQUIRED)
+		target_sources(${PROJECT_NAME} PRIVATE
+			src/platform/macos/midiout_device_coreaudio.cpp
+			src/platform/macos/midiout_device_coreaudio.h)
+	endif()
+
+	find_library(MACOSFOUNDATION Foundation REQUIRED)
+	find_library(MACOSAUDIOTOOLBOX AudioToolbox REQUIRED)
 	target_link_libraries(${PROJECT_NAME} ${MACOSFOUNDATION} ${MACOSAUDIOUNIT} ${MACOSAUDIOTOOLBOX})
 endif()
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
-	option(PLAYER_JS_BUILD_SHELL "Build the Player executable as a shell file (.html) instead of a standalone javascript file (.js)" OFF)
+	option(PLAYER_JS_BUILD_SHELL
+		"Build the Player executable as a shell file (.html) instead of a standalone javascript file (.js)" OFF)
 	set(PLAYER_JS_GAME_URL "games/" CACHE STRING "Game URL/directory where the web player searches for games")
 	set(PLAYER_JS_OUTPUT_NAME "easyrpg-player" CACHE STRING "Output name of the js, html and wasm files")
-	set_property(SOURCE src/async_handler.cpp APPEND PROPERTY COMPILE_DEFINITIONS "EM_GAME_URL=\"${PLAYER_JS_GAME_URL}\"")
+	set_property(SOURCE src/async_handler.cpp APPEND PROPERTY
+		COMPILE_DEFINITIONS "EM_GAME_URL=\"${PLAYER_JS_GAME_URL}\"")
 endif()
 
 # Endianess check
-if(${CMAKE_VERSION} VERSION_GREATER_EQUAL 3.20)
-	if (CMAKE_CXX_BYTE_ORDER STREQUAL "BIG_ENDIAN")
+if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.20)
+	if(CMAKE_CXX_BYTE_ORDER STREQUAL "BIG_ENDIAN")
 		target_compile_definitions(${PROJECT_NAME} PRIVATE WORDS_BIGENDIAN=1)
 	endif()
 else()
@@ -883,9 +985,11 @@ set(CMAKE_XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "org.easyrpg.player")
 if(BUILD_CLIENT) # BUILD_CLIENT : liblcf
 
 # liblcf
-option(PLAYER_BUILD_LIBLCF "Instead of detecting liblcf, clone liblcf into lib/liblcf and build it along with the Player. This is convenient for development." OFF)
-set(PLAYER_BUILD_LIBLCF_GIT "https://github.com/EasyRPG/liblcf.git" CACHE STRING "Git repository of liblcf to clone. Requires PLAYER_BUILD_LIBLCF=ON.")
-set(PLAYER_BUILD_LIBLCF_BRANCH "master" CACHE STRING "Branch of the liblcf repository to clone. Requires PLAYER_BUILD_LIBLCF=ON.")
+option(PLAYER_BUILD_LIBLCF "For developers: Clone liblcf and builds it along with the Player." OFF)
+set(PLAYER_BUILD_LIBLCF_GIT "https://github.com/EasyRPG/liblcf.git"
+	CACHE STRING "Git repository of liblcf to clone. Requires PLAYER_BUILD_LIBLCF=ON.")
+set(PLAYER_BUILD_LIBLCF_BRANCH "master"
+	CACHE STRING "Branch of the liblcf repository to clone. Requires PLAYER_BUILD_LIBLCF=ON.")
 
 if(PLAYER_BUILD_LIBLCF)
 	# liblcf is built as part of this cmake file
@@ -909,7 +1013,7 @@ if(PLAYER_BUILD_LIBLCF)
 	target_link_libraries(${PROJECT_NAME} lcf)
 else()
 	# Use system package
-	player_find_package(NAME liblcf VERSION 0.8
+	player_find_package(NAME liblcf VERSION 0.8.1
 		TARGET liblcf::liblcf
 		REQUIRED)
 endif()
@@ -969,23 +1073,25 @@ if(PLAYER_MULTIPLAYER)
 endif()
 
 # Detect all required libraries
-player_find_package(NAME PNG TARGET PNG::PNG REQUIRED)
-player_find_package(NAME fmt TARGET fmt::fmt REQUIRED)
+# PNG pulls in zlib which has a broken config when not both static and shared library are installed
+player_find_package(NAME PNG TARGET PNG::PNG REQUIRED CONFIG_BROKEN)
+player_find_package(NAME fmt TARGET fmt::fmt VERSION 5.2 REQUIRED)
 
-# Do not use player_find_package. enable_language used by pixman on Android does not work properly inside function calls
+# Do not use player_find_package. enable_language used by pixman on Android does not work properly inside functions
 find_package(Pixman REQUIRED)
 target_link_libraries(${PROJECT_NAME} PIXMAN::PIXMAN)
 
 # Always enable Wine registry support on non-Windows, but not for console ports
 if(NOT CMAKE_SYSTEM_NAME STREQUAL "Windows"
-	AND NOT ${PLAYER_TARGET_PLATFORM} MATCHES "^(psvita|3ds|switch|wii)$"
-	AND NOT NINTENDO_WIIU)
+	AND NOT PLAYER_CONSOLE_PORT)
 	target_compile_definitions(${PROJECT_NAME} PUBLIC HAVE_WINE=1)
 endif()
 
 # freetype and harfbuzz
 option(PLAYER_WITH_FREETYPE "Support FreeType font rendering" ON)
-CMAKE_DEPENDENT_OPTION(PLAYER_WITH_HARFBUZZ "Enable HarfBuzz text shaping (Requires FreeType)" ON "PLAYER_WITH_FREETYPE" OFF)
+cmake_dependent_option(PLAYER_WITH_HARFBUZZ
+	"Enable HarfBuzz text shaping (Requires FreeType)" ON
+	"PLAYER_WITH_FREETYPE" OFF)
 
 # Freetype is not really broken however only using FT config without HB config causes problems
 player_find_package(NAME freetype
@@ -1016,49 +1122,29 @@ player_find_package(NAME lhasa
 # json support
 if(CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
 	player_find_package(NAME nlohmann_json
+		VERSION 3.9.1
 		DEFINITION HAVE_NLOHMANN_JSON
 		TARGET nlohmann_json::nlohmann_json
-		REQUIRED
-	)
+		REQUIRED)
 else()
 	option(PLAYER_WITH_NLOHMANN_JSON "Support processing of JSON files" ON)
 	player_find_package(NAME nlohmann_json
+		VERSION 3.9.1
 		CONDITION PLAYER_WITH_NLOHMANN_JSON
 		DEFINITION HAVE_NLOHMANN_JSON
 		TARGET nlohmann_json::nlohmann_json
-		ONLY_CONFIG
-	)
-endif()
-
-# Sound system to use
-if(${PLAYER_TARGET_PLATFORM} STREQUAL "SDL2")
-	set(PLAYER_AUDIO_BACKEND "SDL2" CACHE STRING "Audio system to use. Options: SDL2 OFF")
-	set_property(CACHE PLAYER_AUDIO_BACKEND PROPERTY STRINGS SDL2 OFF)
-
-	if(${PLAYER_AUDIO_BACKEND} STREQUAL "SDL2_mixer")
-		message(FATAL_ERROR "SDL2_mixer is not supported anymore. Use SDL2 instead.")
-	endif()
-elseif(${PLAYER_TARGET_PLATFORM} STREQUAL "SDL1")
-	set(PLAYER_AUDIO_BACKEND "SDL1" CACHE STRING "Audio system to use. Options: SDL1 OFF")
-	set_property(CACHE PLAYER_AUDIO_BACKEND PROPERTY STRINGS SDL1 OFF)
-else()
-	# Assuming that all platforms not targeting SDL have only one audio backend
-	set(PLAYER_AUDIO_BACKEND "Default" CACHE STRING "Audio system to use. Options: Default OFF")
-	set_property(CACHE PLAYER_AUDIO_BACKEND PROPERTY STRINGS Default OFF)
+		ONLY_CONFIG)
 endif()
 
 # Configure Audio backends
-if(${PLAYER_AUDIO_BACKEND} MATCHES "^(SDL[12]|Default)$")
-	set(PLAYER_HAS_AUDIO ON)
+if(PLAYER_HAS_AUDIO)
 	target_compile_definitions(${PROJECT_NAME} PUBLIC SUPPORT_AUDIO=1)
 
-	if(${PLAYER_TARGET_PLATFORM} STREQUAL "libretro")
-		if (WIN32 OR UNIX OR APPLE)
+	if(PLAYER_TARGET_PLATFORM STREQUAL "libretro")
+		if(WIN32 OR UNIX OR APPLE)
 			set(SUPPORT_NATIVE_MIDI ON)
 		endif()
-	endif()
-
-	if(WIN32 OR APPLE)
+	elseif(WIN32 OR MACOS)
 		set(SUPPORT_NATIVE_MIDI ON)
 	elseif(UNIX)
 		find_package(ALSA)
@@ -1067,7 +1153,9 @@ if(${PLAYER_AUDIO_BACKEND} MATCHES "^(SDL[12]|Default)$")
 		endif()
 	endif()
 
-	CMAKE_DEPENDENT_OPTION(PLAYER_WITH_NATIVE_MIDI "Play MIDI audio using the API of the operating system" ON "SUPPORT_NATIVE_MIDI" OFF)
+	cmake_dependent_option(PLAYER_WITH_NATIVE_MIDI
+		"Play MIDI audio using the API of the operating system" ON
+		"SUPPORT_NATIVE_MIDI" OFF)
 	if(PLAYER_WITH_NATIVE_MIDI)
 		target_compile_definitions(${PROJECT_NAME} PUBLIC HAVE_NATIVE_MIDI=1)
 		if(WIN32)
@@ -1076,8 +1164,7 @@ if(${PLAYER_AUDIO_BACKEND} MATCHES "^(SDL[12]|Default)$")
 			target_compile_definitions(${PROJECT_NAME} PUBLIC HAVE_ALSA=1)
 			target_sources(${PROJECT_NAME} PRIVATE
 				src/platform/linux/midiout_device_alsa.cpp
-				src/platform/linux/midiout_device_alsa.h
-			)
+				src/platform/linux/midiout_device_alsa.h)
 			target_link_libraries(${PROJECT_NAME} ALSA::ALSA)
 			find_package(Threads)
 			if(Threads_FOUND)
@@ -1091,32 +1178,50 @@ if(${PLAYER_AUDIO_BACKEND} MATCHES "^(SDL[12]|Default)$")
 	if(PLAYER_ENABLE_FMMIDI)
 		target_compile_definitions(${PROJECT_NAME} PUBLIC WANT_FMMIDI=1)
 	endif()
-elseif(NOT PLAYER_AUDIO_BACKEND)
-	set(PLAYER_HAS_AUDIO OFF)
-else()
-	message(FATAL_ERROR "Invalid Audio Backend ${PLAYER_AUDIO_BACKEND}")
 endif()
 
-CMAKE_DEPENDENT_OPTION(PLAYER_WITH_MPG123 "Play MP3 audio with libmpg123" ON "PLAYER_HAS_AUDIO" OFF)
-CMAKE_DEPENDENT_OPTION(PLAYER_WITH_LIBSNDFILE "Play WAV audio with libsndfile" ON "PLAYER_HAS_AUDIO" OFF)
-CMAKE_DEPENDENT_OPTION(PLAYER_WITH_OGGVORBIS "Play Ogg Vorbis audio with libvorbis" ON "PLAYER_HAS_AUDIO" OFF)
-CMAKE_DEPENDENT_OPTION(PLAYER_WITH_OPUS "Play Opus audio with opusfile" ON "PLAYER_HAS_AUDIO" OFF)
-CMAKE_DEPENDENT_OPTION(PLAYER_WITH_WILDMIDI "Play MIDI audio with wildmidi" ON "PLAYER_HAS_AUDIO" OFF)
-CMAKE_DEPENDENT_OPTION(PLAYER_WITH_FLUIDSYNTH "Play MIDI audio with fluidsynth" ON "PLAYER_HAS_AUDIO" OFF)
-CMAKE_DEPENDENT_OPTION(PLAYER_WITH_FLUIDLITE "Play MIDI audio with fluidlite" ON "PLAYER_HAS_AUDIO" OFF)
-CMAKE_DEPENDENT_OPTION(PLAYER_WITH_XMP "Play MOD audio with libxmp" ON "PLAYER_HAS_AUDIO" OFF)
-CMAKE_DEPENDENT_OPTION(PLAYER_ENABLE_DRWAV "Play WAV audio with dr_wav (built-in). Unsupported files are played by libsndfile." ON "PLAYER_HAS_AUDIO" OFF)
+cmake_dependent_option(PLAYER_WITH_MPG123
+	"Play MP3 audio with libmpg123" ON
+	"PLAYER_HAS_AUDIO;NOT PLAYER_NONFREE" OFF)
+cmake_dependent_option(PLAYER_WITH_LIBSNDFILE
+	"Play WAV audio with libsndfile" ON
+	"PLAYER_HAS_AUDIO;NOT PLAYER_NONFREE" OFF)
+cmake_dependent_option(PLAYER_WITH_OGGVORBIS
+	"Play Ogg Vorbis audio with libvorbis" ON
+	"PLAYER_HAS_AUDIO" OFF)
+cmake_dependent_option(PLAYER_WITH_OPUS
+	"Play Opus audio with opusfile" ON
+	"PLAYER_HAS_AUDIO" OFF)
+cmake_dependent_option(PLAYER_WITH_WILDMIDI
+	"Play MIDI audio with wildmidi" ON
+	"PLAYER_HAS_AUDIO;NOT PLAYER_NONFREE" OFF)
+cmake_dependent_option(PLAYER_WITH_FLUIDSYNTH
+	"Play MIDI audio with fluidsynth" ON
+	"PLAYER_HAS_AUDIO;NOT PLAYER_NONFREE" OFF)
+cmake_dependent_option(PLAYER_WITH_FLUIDLITE
+	"Play MIDI audio with fluidlite" ON
+	"PLAYER_HAS_AUDIO;NOT PLAYER_NONFREE" OFF)
+cmake_dependent_option(PLAYER_WITH_XMP
+	"Play MOD audio with libxmp" ON
+	"PLAYER_HAS_AUDIO" OFF)
+cmake_dependent_option(PLAYER_ENABLE_DRWAV
+	"Play WAV audio with dr_wav (built-in). Unsupported files are played by libsndfile." ON
+	"PLAYER_HAS_AUDIO" OFF)
 
-if(${PLAYER_AUDIO_BACKEND} MATCHES "^(SDL[12]|Default)$")
+if(PLAYER_HAS_AUDIO)
 	set(PLAYER_AUDIO_RESAMPLER "Auto" CACHE STRING "Audio resampler to use. Options: Auto speexdsp samplerate OFF")
 	set_property(CACHE PLAYER_AUDIO_RESAMPLER PROPERTY STRINGS Auto speexdsp samplerate OFF)
 
-	if(${PLAYER_AUDIO_RESAMPLER} STREQUAL "Auto")
+	if(PLAYER_AUDIO_RESAMPLER STREQUAL "Auto")
 		set(PLAYER_AUDIO_RESAMPLER_IS_AUTO ON)
 	endif()
 
-	CMAKE_DEPENDENT_OPTION(PLAYER_WITH_SPEEXDSP "Use speexdsp as resampler when available." ON "PLAYER_HAS_AUDIO;PLAYER_AUDIO_RESAMPLER_IS_AUTO" OFF)
-	CMAKE_DEPENDENT_OPTION(PLAYER_WITH_SAMPLERATE "Use libsamplerate as resampler when available." ON "PLAYER_HAS_AUDIO;PLAYER_AUDIO_RESAMPLER_IS_AUTO" OFF)
+	cmake_dependent_option(PLAYER_WITH_SPEEXDSP
+		"Use speexdsp as resampler when available." ON
+		"PLAYER_HAS_AUDIO;PLAYER_AUDIO_RESAMPLER_IS_AUTO" OFF)
+	cmake_dependent_option(PLAYER_WITH_SAMPLERATE
+		"Use libsamplerate as resampler when available." ON
+		"PLAYER_HAS_AUDIO;PLAYER_AUDIO_RESAMPLER_IS_AUTO" OFF)
 
 	if(PLAYER_AUDIO_RESAMPLER_IS_AUTO)
 		player_find_package(NAME speexdsp
@@ -1130,12 +1235,12 @@ if(${PLAYER_AUDIO_BACKEND} MATCHES "^(SDL[12]|Default)$")
 				DEFINITION HAVE_LIBSAMPLERATE
 				TARGET Samplerate::Samplerate)
 		endif()
-	elseif(${PLAYER_AUDIO_RESAMPLER} STREQUAL "speexdsp")
+	elseif(PLAYER_AUDIO_RESAMPLER STREQUAL "speexdsp")
 		player_find_package(NAME speexdsp
 			DEFINITION HAVE_LIBSPEEXDSP
 			TARGET speexdsp::speexdsp
 			REQUIRED)
-	elseif(${PLAYER_AUDIO_RESAMPLER} STREQUAL "samplerate")
+	elseif(PLAYER_AUDIO_RESAMPLER STREQUAL "samplerate")
 		player_find_package(NAME Samplerate
 			DEFINITION HAVE_LIBSAMPLERATE
 			TARGET Samplerate::Samplerate
@@ -1222,14 +1327,29 @@ if(${PLAYER_AUDIO_BACKEND} MATCHES "^(SDL[12]|Default)$")
 	endif()
 endif()
 
+# Fonts
+option(PLAYER_WITH_BAEKMUK "Enable built-in Baekmuk font (Korean)" ON)
+cmake_dependent_option(PLAYER_WITH_WQY
+	"Enable built-in WenQuanYi font (Chinese)" ON
+	"NOT PLAYER_NONFREE" OFF)
+
+if(PLAYER_WITH_BAEKMUK)
+	target_compile_definitions(${PROJECT_NAME} PUBLIC WANT_FONT_BAEKMUK=1)
+endif()
+
+if(PLAYER_WITH_WQY)
+	target_compile_definitions(${PROJECT_NAME} PUBLIC WANT_FONT_WQY=1)
+endif()
+
 # Executable
-if(${PLAYER_BUILD_EXECUTABLE} AND ${PLAYER_TARGET_PLATFORM} MATCHES "^SDL[12]$" AND NOT NINTENDO_WIIU)
+if(PLAYER_BUILD_EXECUTABLE AND ${PLAYER_TARGET_PLATFORM} MATCHES "^SDL.*$" AND NOT PLAYER_CONSOLE_PORT)
 	if(APPLE)
 		set(EXE_NAME "EasyRPG-Player.app")
 		set_source_files_properties(${${PROJECT_NAME}_BUNDLE_ICON} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
 		add_executable(${EXE_NAME} MACOSX_BUNDLE "src/platform/sdl/main.cpp" ${${PROJECT_NAME}_BUNDLE_ICON})
 		configure_file(resources/macos/Info.plist.in resources/macos/Info.plist @ONLY)
-		set_target_properties(${EXE_NAME} PROPERTIES MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_BINARY_DIR}/resources/macos/Info.plist")
+		set_target_properties(${EXE_NAME} PROPERTIES
+			MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_BINARY_DIR}/resources/macos/Info.plist")
 		set_target_properties(${EXE_NAME} PROPERTIES OUTPUT_NAME "EasyRPG Player")
 	else()
 		set(EXE_NAME ${PROJECT_NAME}_exe)
@@ -1310,11 +1430,16 @@ if(${PLAYER_BUILD_EXECUTABLE} AND ${PLAYER_TARGET_PLATFORM} MATCHES "^SDL[12]$" 
 
 	if(UNIX)
 		# Install desktop entry, icons and metainfo
-		install(FILES resources/unix/easyrpg-player.desktop DESTINATION ${CMAKE_INSTALL_DATADIR}/applications)
-		install(FILES resources/unix/icon-48.png RENAME easyrpg-player.png DESTINATION ${CMAKE_INSTALL_DATADIR}/pixmaps) # legacy
-		install(FILES resources/unix/icon-48.png RENAME easyrpg-player.png DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/48x48/apps)
-		install(FILES resources/unix/easyrpg-player.svg DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/scalable/apps)
-		install(FILES resources/unix/easyrpg-player.metainfo.xml DESTINATION ${CMAKE_INSTALL_DATADIR}/metainfo)
+		install(FILES resources/unix/easyrpg-player.desktop
+			DESTINATION ${CMAKE_INSTALL_DATADIR}/applications)
+		install(FILES resources/unix/icon-48.png RENAME easyrpg-player.png
+			DESTINATION ${CMAKE_INSTALL_DATADIR}/pixmaps) # legacy
+		install(FILES resources/unix/icon-48.png RENAME easyrpg-player.png
+			DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/48x48/apps)
+		install(FILES resources/unix/easyrpg-player.svg
+			DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/scalable/apps)
+		install(FILES resources/unix/easyrpg-player.metainfo.xml
+			DESTINATION ${CMAKE_INSTALL_DATADIR}/metainfo)
 	endif()
 
 	if(MSVC)
@@ -1328,7 +1453,7 @@ if(${PLAYER_BUILD_EXECUTABLE} AND ${PLAYER_TARGET_PLATFORM} MATCHES "^SDL[12]$" 
 		endif()
 		install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PLAYER_JS_OUTPUT_NAME}.wasm DESTINATION ${CMAKE_INSTALL_BINDIR})
 	endif()
-elseif(${PLAYER_TARGET_PLATFORM} MATCHES "^(psvita|3ds|switch|wii)$" OR NINTENDO_WIIU)
+elseif(PLAYER_CONSOLE_PORT AND NOT PLAYER_TARGET_PLATFORM STREQUAL "libretro")
 	set(CPACK_PLATFORM "${PLAYER_TARGET_PLATFORM}")
 	if(NINTENDO_3DS)
 		add_executable(easyrpg-player src/platform/3ds/main.cpp)
@@ -1345,7 +1470,6 @@ elseif(${PLAYER_TARGET_PLATFORM} MATCHES "^(psvita|3ds|switch|wii)$" OR NINTENDO
 			SMDH easyrpg-player.smdh
 			${BUNDLE_ARG} ${PLAYER_BUNDLE_PATH})
 		install(FILES ${CMAKE_CURRENT_BINARY_DIR}/easyrpg-player.3dsx
-				resources/3ds/easyrpg-player.xml # consider removing, *hax² is mostly obsolete
 			DESTINATION easyrpg-player COMPONENT 3ds)
 	elseif(NINTENDO_SWITCH)
 		add_executable(easyrpg-player src/platform/switch/main.cpp)
@@ -1370,6 +1494,10 @@ elseif(${PLAYER_TARGET_PLATFORM} MATCHES "^(psvita|3ds|switch|wii)$" OR NINTENDO
 			-laesnd
 			-lfat
 			-lwiikeyboard)
+		if(TARGET SDL2::SDL2main)
+			# Missing dependency?
+			target_link_libraries(SDL2::SDL2main INTERFACE -lfat)
+		endif()
 		ogc_create_dol(easyrpg-player)
 		string(TIMESTAMP WII_DATE "%Y%m%d000000")
 		configure_file(resources/wii/meta.xml.in resources/wii/meta.xml @ONLY)
@@ -1429,7 +1557,7 @@ elseif(${PLAYER_TARGET_PLATFORM} MATCHES "^(psvita|3ds|switch|wii)$" OR NINTENDO
 	endif()
 	install(TARGETS easyrpg-player RUNTIME DESTINATION . COMPONENT debug)
 	# debug information
-	if(${PLAYER_TARGET_PLATFORM} MATCHES "^(3ds|switch|wii)$" OR NINTENDO_WIIU)
+	if(NINTENDO_3DS OR NINTENDO_WII OR NINTENDO_WIIU OR NINTENDO_SWITCH)
 		dkp_target_generate_symbol_list(easyrpg-player)
 		install(FILES ${CMAKE_CURRENT_BINARY_DIR}/easyrpg-player.map
 				${CMAKE_CURRENT_BINARY_DIR}/easyrpg-player.lst
@@ -1447,7 +1575,7 @@ elseif(${PLAYER_TARGET_PLATFORM} MATCHES "^(psvita|3ds|switch|wii)$" OR NINTENDO
 	set(CPACK_COMPONENT_INCLUDE_TOPLEVEL_DIRECTORY OFF) # we do this manually
 	include(CPack)
 else() # library
-	if(${PLAYER_TARGET_PLATFORM} STREQUAL "libretro")
+	if(PLAYER_TARGET_PLATFORM STREQUAL "libretro")
 		add_library(easyrpg_libretro
 			src/platform/libretro/audio.cpp
 			src/platform/libretro/audio.h
@@ -1457,11 +1585,9 @@ else() # library
 			src/platform/libretro/ui.cpp
 			src/platform/libretro/ui.h
 			src/platform/libretro/midiout_device.cpp
-			src/platform/libretro/midiout_device.h
-		)
+			src/platform/libretro/midiout_device.h)
 		set_property(SOURCE src/platform/libretro/ui.cpp
-			PROPERTY COMPILE_DEFINITIONS PLAYER_VERSION_FULL="${PLAYER_VERSION_FULL}"
-		)
+			PROPERTY COMPILE_DEFINITIONS PLAYER_VERSION_FULL="${PLAYER_VERSION_FULL}")
 		target_link_libraries(easyrpg_libretro ${PROJECT_NAME})
 		set_target_properties(easyrpg_libretro PROPERTIES PREFIX "")
 		set(PLAYER_TEST_LIBRARIES "easyrpg_libretro")
@@ -1469,7 +1595,7 @@ else() # library
 		if(WIN32)
 			set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT easyrpg_libretro)
 		endif()
-	elseif(ANDROID AND ${PLAYER_TARGET_PLATFORM} STREQUAL "SDL2")
+	elseif(ANDROID AND ${PLAYER_TARGET_PLATFORM} MATCHES "^SDL.*$")
 		add_library(easyrpg_android
 			src/platform/android/android.cpp
 			src/platform/android/android.h
@@ -1551,7 +1677,8 @@ set(BASHCOMPLETION_STATUS "Unavailable")
 find_package(bash-completion QUIET)
 if(BASH_COMPLETION_FOUND OR (UNIX AND NOT APPLE))
 	set(BASHCOMPLETION_STATUS "Available")
-	install(FILES resources/unix/bash-completion/easyrpg-player DESTINATION "${CMAKE_INSTALL_DATADIR}/bash-completion/completions")
+	install(FILES resources/unix/bash-completion/easyrpg-player
+		DESTINATION "${CMAKE_INSTALL_DATADIR}/bash-completion/completions")
 endif()
 
 # Doxygen
@@ -1589,18 +1716,21 @@ if(PLAYER_ENABLE_TESTS)
 	add_executable(test_runner_player EXCLUDE_FROM_ALL ${TEST_FILES})
 	set_target_properties(test_runner_player PROPERTIES
 		OUTPUT_NAME "test_runner"
-		WIN32_EXECUTABLE FALSE
-	)
+		WIN32_EXECUTABLE FALSE)
 
 	if(CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
-		target_compile_definitions(test_runner_player PUBLIC EP_NATIVE_TEST_PATH=\"${CMAKE_CURRENT_SOURCE_DIR}/tests/assets\")
-		target_compile_definitions(test_runner_player PUBLIC EP_TEST_PATH=\"/assets\")
-		target_compile_definitions(test_runner_player PUBLIC DOCTEST_CONFIG_NO_EXCEPTIONS_BUT_WITH_ALL_ASSERTS=1)
+		target_compile_definitions(test_runner_player
+			PUBLIC EP_NATIVE_TEST_PATH=\"${CMAKE_CURRENT_SOURCE_DIR}/tests/assets\")
+		target_compile_definitions(test_runner_player
+			PUBLIC EP_TEST_PATH=\"/assets\")
+		target_compile_definitions(test_runner_player
+			PUBLIC DOCTEST_CONFIG_NO_EXCEPTIONS_BUT_WITH_ALL_ASSERTS=1)
 
 		target_link_libraries(test_runner_player "nodefs.js")
 		set_property(TARGET test_runner_player PROPERTY LINK_FLAGS "-sALLOW_MEMORY_GROWTH --bind")
 	else()
-		target_compile_definitions(test_runner_player PUBLIC EP_TEST_PATH=\"${CMAKE_CURRENT_SOURCE_DIR}/tests/assets\")
+		target_compile_definitions(test_runner_player
+			PUBLIC EP_TEST_PATH=\"${CMAKE_CURRENT_SOURCE_DIR}/tests/assets\")
 	endif()
 	target_link_libraries(test_runner_player ${PLAYER_TEST_LIBRARIES})
 	if(CMAKE_COLOR_DIAGNOSTICS)
@@ -1617,9 +1747,9 @@ endif()
 # Instrumentation framework
 set(PLAYER_ENABLE_INSTRUMENTATION "OFF" CACHE STRING "Build performance instrumentation hooks")
 set_property(CACHE PLAYER_ENABLE_INSTRUMENTATION PROPERTY STRINGS OFF VTune)
-if (NOT ${PLAYER_ENABLE_INSTRUMENTATION} STREQUAL "OFF")
+if(NOT ${PLAYER_ENABLE_INSTRUMENTATION} STREQUAL "OFF")
 	target_compile_definitions(${PROJECT_NAME} PUBLIC PLAYER_INSTRUMENTATION=${PLAYER_ENABLE_INSTRUMENTATION})
-	if (${PLAYER_ENABLE_INSTRUMENTATION} STREQUAL "VTune")
+	if(${PLAYER_ENABLE_INSTRUMENTATION} STREQUAL "VTune")
 		player_find_package(NAME VTune TARGET VTune::ITT REQUIRED)
 	endif()
 endif()
@@ -1659,7 +1789,7 @@ if(PLAYER_BUILD_LIBLCF)
 endif()
 
 message(STATUS "Audio backend: ${PLAYER_AUDIO_BACKEND}")
-if(${PLAYER_AUDIO_BACKEND} MATCHES "^(SDL[12]|Default)$")
+if(PLAYER_HAS_AUDIO)
 	message(STATUS "")
 
 	set(WAV_LIBS)
@@ -1764,7 +1894,7 @@ message(STATUS "Doxygen: ${DOXYGEN_STATUS}")
 
 message(STATUS "")
 
-if (${PLAYER_TARGET_PLATFORM} STREQUAL "SDL1")
+if(${PLAYER_TARGET_PLATFORM} STREQUAL "SDL1")
 	message(WARNING "SDL1 is deprecated!")
-	message(WARNING "Please migrate to SDL2!")
+	message(WARNING "Please migrate to SDL2 or SDL3!")
 endif()

@@ -161,9 +161,8 @@ namespace Input {
 		"KEY_C",
 		"KEY_V",
 		"KEY_CTRL",
-		"KEY_ESCAPE",
-
-		"BUTTON_COUNT");
+		"KEY_ESCAPE");
+	static_assert(kInputButtonNames.size() == static_cast<size_t>(BUTTON_COUNT));
 
 	constexpr auto kInputButtonHelp = lcf::makeEnumTags<InputButton>(
 		"Up Direction",
@@ -222,9 +221,8 @@ namespace Input {
 		"C Key",
 		"V Key",
 		"Ctrl Key",
-		"Escape Key",
-
-		"Total Button Count");
+		"Escape Key");
+	static_assert(kInputButtonHelp.size() == static_cast<size_t>(BUTTON_COUNT));
 
 	/**
 	 * Return true if the given button is a system button.
@@ -290,8 +288,8 @@ namespace Input {
 			"RIGHT",
 			"UPLEFT",
 			"UP",
-			"UPRIGHT",
-			"NUM_DIRECTIONS");
+			"UPRIGHT");
+		static_assert(kInputDirectionNames.size() == static_cast<size_t>(NUM_DIRECTIONS));
 	};
 
 	using ButtonMappingArray = FlatUniqueMultiMap<InputButton,Keys::InputKey>;

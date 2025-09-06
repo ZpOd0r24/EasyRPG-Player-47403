@@ -32,7 +32,7 @@ Game_CommonEvent::Game_CommonEvent(int common_event_id) :
 	if (ce->trigger == lcf::rpg::EventPage::Trigger_parallel
 			&& !ce->event_commands.empty()) {
 		interpreter.reset(new Game_Interpreter_Map());
-		interpreter->Push(this);
+		interpreter->Push<InterpreterExecutionType::Parallel>(this);
 	}
 
 
@@ -63,13 +63,17 @@ AsyncOp Game_CommonEvent::Update(bool resume_async) {
 	return {};
 }
 
+int Game_CommonEvent::GetId() const {
+	return common_event_id;
+}
+
 int Game_CommonEvent::GetIndex() const {
 	return common_event_id;
 }
 
 // Game_Map ensures validity of Common Events
 
-StringView Game_CommonEvent::GetName() const {
+std::string_view Game_CommonEvent::GetName() const {
 	return lcf::ReaderUtil::GetElement(lcf::Data::commonevents, common_event_id)->name;
 }
 

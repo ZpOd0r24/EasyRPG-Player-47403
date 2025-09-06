@@ -5,9 +5,9 @@ android {
     assetPacks = [":assets"]
     defaultConfig {
         applicationId "org.easyrpg.player"
-        compileSdk 34
+        compileSdk 36
         minSdkVersion 21
-        targetSdkVersion 34
+        targetSdkVersion 36
         versionName VERSION_NAME
         versionCode Integer.parseInt(VERSION_CODE)
     }
@@ -53,12 +53,14 @@ android {
                         "-DBUILD_SHARED_LIBS=ON",
                         "-DPLAYER_ENABLE_TESTS=OFF"
 
-                if (project.hasProperty("toolchainDirs")) {
-                    arguments.add('-DPLAYER_ANDROID_TOOLCHAIN_PATH=' + project.properties['toolchainDirs'])
+                if (project.hasProperty("toolchainDirs") && project.toolchainDirs) {
+                    arguments.add('-DPLAYER_ANDROID_TOOLCHAIN_PATH=' + project.toolchainDirs)
+                } else if (System.getenv('EASYRPG_BUILDSCRIPTS')) {
+                    arguments.add('-DPLAYER_ANDROID_TOOLCHAIN_PATH=' + System.getenv('EASYRPG_BUILDSCRIPTS') + '/android')
                 }
 
                 if (project.hasProperty("cmakeOptions")) {
-                    arguments.addAll(project.properties['cmakeOptions'].split(" "))
+                    arguments.addAll(project.cmakeOptions.split(" "))
                 }
             }
         }
@@ -75,10 +77,11 @@ allprojects {
 
 dependencies {
     implementation 'androidx.appcompat:appcompat:1.7.0'
+    implementation "androidx.activity:activity:1.10.1"
     implementation 'com.google.android.material:material:1.12.0'
     implementation 'androidx.cardview:cardview:1.0.0'
-    implementation 'androidx.recyclerview:recyclerview:1.3.2'
-    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    implementation 'androidx.recyclerview:recyclerview:1.4.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.2.1'
     implementation 'androidx.documentfile:documentfile:1.0.1'
     implementation 'org.ini4j:ini4j:0.5.4'
 }

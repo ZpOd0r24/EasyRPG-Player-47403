@@ -39,6 +39,7 @@ struct Game_ConfigGame {
 	StringConfigParam engine_str{ "Engine", "", "Game", "Engine", std::string() };
 	BoolConfigParam fake_resolution{ "Fake Metrics", "Makes games run on higher resolutions (with some success)", "Game", "FakeResolution", false };
 	BoolConfigParam patch_easyrpg{ "EasyRPG", "EasyRPG Engine Extensions", "Patch", "EasyRPG", false };
+	BoolConfigParam patch_destiny{ "Destiny Patch", "", "Patch", "Destiny", false };
 	BoolConfigParam patch_dynrpg{ "DynRPG", "", "Patch", "DynRPG", false };
 	ConfigParam<int> patch_maniac{ "Maniac Patch", "", "Patch", "Maniac", 0 };
 	BoolConfigParam patch_common_this_event{ "Common This Event", "Support \"This Event\" in Common Events", "Patch", "CommonThisEvent", false };
@@ -47,6 +48,28 @@ struct Game_ConfigGame {
 	BoolConfigParam patch_rpg2k3_commands{ "RPG2k3 Event Commands", "Enable support for RPG2k3 event commands", "Patch", "RPG2k3Commands", false };
 	ConfigParam<int> patch_anti_lag_switch{ "Anti-Lag Switch", "Disable event page refreshes when switch is set", "Patch", "AntiLagSwitch", 0 };
 	ConfigParam<int> patch_direct_menu{ "Direct Menu", " Allows direct access to subscreens of the default menu", "Patch", "DirectMenu", 0 };
+
+	ConfigParam<int> patch_encounter_random_alert_sw{ "Encounter Randomness Alert", "Set troop id to a variable, activate a switch and skip random battle", "Patch", "EncounterAlert.Switch", 0 };
+	ConfigParam<int> patch_encounter_random_alert_var{ "Encounter Randomness Alert", "Set troop id to a variable, activate a switch and skip random battle", "Patch", "EncounterAlert.Var", 0 };
+
+	ConfigParam<int> patch_monsca_maxhp{ "MonSca", "Scales enemy battle stats by variable value. (MaxHP)", "Patch", "MonSca.MaxHP", 0 };
+	ConfigParam<int> patch_monsca_maxsp{ "MonSca", "Scales enemy battle stats by variable value. (MaxSP)", "Patch", "MonSca.MaxSP", 0 };
+	ConfigParam<int> patch_monsca_atk{ "MonSca", "Scales enemy battle stats by variable value. (Attack)", "Patch", "MonSca.Attack", 0 };
+	ConfigParam<int> patch_monsca_def{ "MonSca", "Scales enemy battle stats by variable value. (Defense)", "Patch", "MonSca.Defense", 0 };
+	ConfigParam<int> patch_monsca_spi{ "MonSca", "Scales enemy battle stats by variable value. (Spirit)", "Patch", "MonSca.Spirit", 0 };
+	ConfigParam<int> patch_monsca_agi{ "MonSca", "Scales enemy battle stats by variable value. (Agility)", "Patch", "MonSca.Agility", 0 };
+	ConfigParam<int> patch_monsca_exp{ "MonSca", "Scales enemy battle stats by variable value. (Gained EXP)", "Patch", "MonSca.Experience", 0 };
+	ConfigParam<int> patch_monsca_gold{ "MonSca", "Scales enemy battle stats by variable value. (Gained Money)", "Patch", "MonSca.Money", 0 };
+	ConfigParam<int> patch_monsca_item{ "MonSca", "Scales enemy battle stats by variable value. (Gained Item)", "Patch", "MonSca.ItemId", 0 };
+	ConfigParam<int> patch_monsca_droprate{ "MonSca", "Scales enemy battle stats by variable value. (Item Drop Rate)", "Patch", "MonSca.ItemDropRate", 0 };
+	ConfigParam<int> patch_monsca_levelscaling{ "MonSca", "Scales enemy battle stats by variable value. (Alternate formula)", "Patch", "MonSca.LevelScaling", 0 };
+	ConfigParam<int> patch_monsca_plus{ "MonSca", "Scale enemies individually based on troop index", "Patch", "MonSca.Plus", 0 };
+
+	ConfigParam<int> patch_explus_var{ "EXPlus", "Boosts party EXP by set percentages", "Patch", "EXPlus.VarExpBoost", 0 };
+	ConfigParam<int> patch_explusplus_var{ "EXPlus", "Allows for setting party index of given actors to a variable", "Patch", "EXPlus.VarActorInParty", 0 };
+
+	ConfigParam<int> patch_guardrevamp_normal{ "GuardRevamp", "Changes damage calculation for defense situations (Normal)", "Patch", "GuardRevamp.NormalDefense", 0 };
+	ConfigParam<int> patch_guardrevamp_strong{ "GuardRevamp", "Changes damage calculation for defense situations (Strong)", "Patch", "GuardRevamp.StrongDefense", 0 };
 
 	// Command line only
 	BoolConfigParam patch_support{ "Support patches", "When OFF all patch support is disabled", "", "", true };
@@ -57,9 +80,9 @@ struct Game_ConfigGame {
 	int engine = 0;
 
 	/**
-	 * Create a game config from the config file in the game directory, then loads command line arguments.
+	 * Initializes a game config from the config file in the game directory, then loads command line arguments.
 	 */
-	static Game_ConfigGame Create(CmdlineParser& cp);
+	void Initialize(CmdlineParser& cp);
 
 	/**
 	 * Load configuration values from a stream;
