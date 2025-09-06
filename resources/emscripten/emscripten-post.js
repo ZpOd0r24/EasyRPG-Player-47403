@@ -7,12 +7,6 @@ if (Module.game.length > 0) {
   FS.chdir(Module.game);
 }
 
-// Use IDBFS for save file storage when the filesystem was not
-// overwritten by a custom emscripten shell file
-if (Module.saveFs === undefined) {
-  Module.saveFs = IDBFS;
-}
-
 Module.initApi = function() {
   Module.api_private.download_js = function (buffer, size, filename) {
     const blob = new Blob([Module.HEAPU8.slice(buffer, buffer + size)]);

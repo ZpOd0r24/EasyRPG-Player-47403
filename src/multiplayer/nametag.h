@@ -31,8 +31,8 @@ public:
 
 	void Draw(Bitmap& dst) override;
 
-	void SetNickname(StringView name);
-	void SetSystemGraphic(StringView sys_name);
+	void SetNickname(std::string_view name);
+	void SetSystemGraphic(std::string_view sys_name);
 	void SetEffectsDirty();
 	void SetFlashFramesLeft(int frames);
 	void SetTransparent(bool val);

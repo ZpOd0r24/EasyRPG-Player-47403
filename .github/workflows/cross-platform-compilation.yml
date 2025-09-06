@@ -1,6 +1,6 @@
 # Settings (See .../settings/secrets/actions)
 # +- secrets: APK_KEY_ALIAS, APK_KEY_PASSWORD, APK_STORE_FILE_B64
-# +- variables: GIT_USER_URL, TOOLCHAIN_RELEASE_NAME, MACOS_TOOLCHAIN_OLDPATH
+# +- variables: RESOURCE_URL, TOOLCHAIN_RELEASE_NAME, MACOS_TOOLCHAIN_OLDPATH
 
 name: Cross-platform Compilation
 
@@ -128,7 +128,7 @@ jobs:
       - name: Setup Toolchain
         run: |
           aria2c -o tmp.zip \
-            "${{ vars.GIT_USER_URL }}/EasyRPG-buildscripts/releases/download/${{ vars.TOOLCHAIN_RELEASE_NAME }}/vcpkg-export.zip"
+            "${{ vars.RESOURCE_URL }}/EasyRPG-Downloads/releases/download/${{ vars.TOOLCHAIN_RELEASE_NAME }}/vcpkg_toolchain.zip"
           7z x tmp.zip && mv -v vcpkg-export* vcpkg
 
       - name: Compile
@@ -139,7 +139,7 @@ jobs:
             -DCMAKE_TOOLCHAIN_FILE=.\vcpkg\scripts\buildsystems\vcpkg.cmake ^
             -DCMAKE_BUILD_TYPE=RelWithDebInfo ^
             -DPLAYER_BUILD_LIBLCF=on ^
-            -DPLAYER_BUILD_LIBLCF_GIT="${{ vars.GIT_USER_URL }}/EasyRPG-liblcf" ^
+            -DPLAYER_BUILD_LIBLCF_GIT="${{ vars.RESOURCE_URL }}/EasyRPG-liblcf" ^
             -DPLAYER_BUILD_LIBLCF_BRANCH="player-${{ env.TAG_BRANCH }}" ^
             -DPLAYER_MULTIPLAYER=on -DPLAYER_VERSION_APPEND=${{ env.PLAYER_VERSION_APPEND }}
           :: https://stackoverflow.com/questions/19024259/how-to-change-the-build-type-to-release-mode-in-cmake/20423820#20423820
@@ -195,7 +195,7 @@ jobs:
       - name: Setup Toolchain
         run: |
           aria2c -o tmp.tar.gz \
-            "${{ vars.GIT_USER_URL }}/EasyRPG-buildscripts/releases/download/${{ vars.TOOLCHAIN_RELEASE_NAME }}/android_toolchain.tar.gz"
+            "${{ vars.RESOURCE_URL }}/EasyRPG-Downloads/releases/download/${{ vars.TOOLCHAIN_RELEASE_NAME }}/android_toolchain.tar.gz"
           mkdir -p toolchain && tar xf tmp.tar.gz -C toolchain
 
       - name: Decode Base64 Keystore
@@ -215,9 +215,10 @@ jobs:
         run: |
           VER="(GithubActions/`date +%Y-%m-%d`)"
           cmake_opts="-DPLAYER_MULTIPLAYER=on -DCMAKE_BUILD_TYPE=Release -DPLAYER_BUILD_LIBLCF=on"" "
-          cmake_opts+="-DPLAYER_BUILD_LIBLCF_GIT='${{ vars.GIT_USER_URL }}/EasyRPG-liblcf'"" "
+          cmake_opts+="-DPLAYER_BUILD_LIBLCF_GIT='${{ vars.RESOURCE_URL }}/EasyRPG-liblcf'"" "
           cmake_opts+="-DPLAYER_BUILD_LIBLCF_BRANCH='player-${{ env.TAG_BRANCH }}'"" "
-          cmake_opts+="-DPLAYER_VERSION_APPEND='$VER'"
+          cmake_opts+="-DPLAYER_VERSION_APPEND='$VER'"" "
+          cmake_opts+="-DPLAYER_WITH_FLUIDSYNTH=OFF"
           cd builds/android
           ./gradlew -PtoolchainDirs="${{ github.workspace }}/toolchain" \
             -PcmakeOptions="$cmake_opts" \
@@ -265,7 +266,7 @@ jobs:
       - name: Setup Toolchain
         run: |
           aria2c -o tmp.tar.gz \
-            "${{ vars.GIT_USER_URL }}/EasyRPG-buildscripts/releases/download/${{ vars.TOOLCHAIN_RELEASE_NAME }}/macos_toolchain.tar.gz"
+            "${{ vars.RESOURCE_URL }}/EasyRPG-Downloads/releases/download/${{ vars.TOOLCHAIN_RELEASE_NAME }}/macos_toolchain.tar.gz"
           mkdir -p toolchain && tar xf tmp.tar.gz -C toolchain
           # fix: Imported target ... includes non-existent path
           # grep: -I is to exclude binary files
@@ -285,7 +286,7 @@ jobs:
           -DCMAKE_OSX_ARCHITECTURES="${{ matrix.arch }}" \
           -DCMAKE_BUILD_TYPE=RelWithDebInfo \
           -DPLAYER_BUILD_LIBLCF=on \
-          -DPLAYER_BUILD_LIBLCF_GIT="${{ vars.GIT_USER_URL }}/EasyRPG-liblcf" \
+          -DPLAYER_BUILD_LIBLCF_GIT="${{ vars.RESOURCE_URL }}/EasyRPG-liblcf" \
           -DPLAYER_BUILD_LIBLCF_BRANCH="player-${{ env.TAG_BRANCH }}" \
           -DPLAYER_MULTIPLAYER=on \
           -DPLAYER_VERSION_APPEND="$VER"
@@ -326,8 +327,8 @@ jobs:
           git clone --depth 1 https://github.com/emscripten-core/emsdk.git emsdk-portable
           cd emsdk-portable
           touch .emscripten
-          ./emsdk install 3.1.49
-          ./emsdk activate 3.1.49
+          ./emsdk install 4.0.14
+          ./emsdk activate 4.0.14
 
       - name: Setup Env
         run: |
@@ -337,7 +338,7 @@ jobs:
         run: |
           mkdir emscripten_toolchain && cd emscripten_toolchain
           aria2c -o tmp.tar.gz \
-            "${{ vars.GIT_USER_URL }}/EasyRPG-buildscripts/releases/download/${{ vars.TOOLCHAIN_RELEASE_NAME }}/emscripten_toolchain.tar.gz"
+            "${{ vars.RESOURCE_URL }}/EasyRPG-Downloads/releases/download/${{ vars.TOOLCHAIN_RELEASE_NAME }}/emscripten_toolchain.tar.gz"
           tar xf tmp.tar.gz
           mkdir bin
 
@@ -356,7 +357,7 @@ jobs:
           -DPLAYER_JS_GAME_URL=./play/games/ \
           -DPLAYER_MULTIPLAYER=on \
           -DPLAYER_BUILD_LIBLCF=on \
-          -DPLAYER_BUILD_LIBLCF_GIT="${{ vars.GIT_USER_URL }}/EasyRPG-liblcf" \
+          -DPLAYER_BUILD_LIBLCF_GIT="${{ vars.RESOURCE_URL }}/EasyRPG-liblcf" \
           -DPLAYER_BUILD_LIBLCF_BRANCH="player-${{ env.TAG_BRANCH }}" \
           -DPLAYER_VERSION_APPEND="$VER" \
           -DPLAYER_WITH_FLUIDSYNTH=OFF

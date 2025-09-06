@@ -1,0 +1,406 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index aa74cd891..a9940f14b 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -31,7 +31,6 @@ set(CMAKE_CXX_EXTENSIONS ON)
+ # Must be at global scope, otherwise breaks -DPLAYER_BUILD_LIBLCF (see CMP0077)
+ option(BUILD_SHARED_LIBS "Build shared easyrpg_libretro core" ON)
+ 
+-<<<<<<< HEAD
+ option(BUILD_CLIENT "Build client" ON)
+ option(BUILD_SERVER "Build server" OFF)
+ 
+@@ -39,13 +38,10 @@ if(NOT BUILD_CLIENT AND NOT BUILD_SERVER)
+ 	set(BUILD_CLIENT on)
+ endif()
+ 
+-option(CMAKE_FIND_PACKAGE_PREFER_CONFIG "Prefer config files over bundled FindXXX files. Set this to OFF when configuration fails and report a bug." ON)
+-=======
+ option(CMAKE_FIND_PACKAGE_PREFER_CONFIG
+ 	"Prefer config files over bundled FindXXX files. Set this to OFF when configuration fails and report a bug." ON)
+ 
+ option(PLAYER_NONFREE "For commercial usage disable libraries and fonts that are licensed under (L)GPL." OFF)
+->>>>>>> 7d0c9a8bf
+ 
+ # Source Files
+ add_library(${PROJECT_NAME} OBJECT
+@@ -803,24 +799,6 @@ elseif(PLAYER_TARGET_PLATFORM STREQUAL "switch")
+ 		src/platform/switch/ui.cpp
+ 		src/platform/switch/ui.h)
+ 	target_link_libraries(${PROJECT_NAME} switch-assets)
+-<<<<<<< HEAD
+-elseif(${PLAYER_TARGET_PLATFORM} STREQUAL "wii")
+-	find_package(SDL REQUIRED)
+-	target_compile_definitions(${PROJECT_NAME} PUBLIC USE_SDL=1 PLAYER_NINTENDO)
+-	target_include_directories(${PROJECT_NAME} PUBLIC ${SDL_INCLUDE_DIR})
+-	target_sources(${PROJECT_NAME} PRIVATE
+-		src/platform/wii/audio.cpp
+-		src/platform/wii/audio.h
+-		src/platform/wii/clock.cpp
+-		src/platform/wii/clock.h
+-		src/platform/wii/input_buttons.cpp
+-		src/platform/sdl/axis.h
+-		src/platform/sdl/sdl_ui.cpp
+-		src/platform/sdl/sdl_ui.h)
+-=======
+-else()
+-	message(FATAL_ERROR "Invalid target platform")
+->>>>>>> 7d0c9a8bf
+ endif()
+ 
+ # Sound system to use
+diff --git a/src/battle_animation.cpp b/src/battle_animation.cpp
+index 03990305d..3cf8d74d9 100644
+--- a/src/battle_animation.cpp
++++ b/src/battle_animation.cpp
+@@ -235,13 +235,8 @@ static int CalculateOffset(int pos, int target_height) {
+ 
+ /////////
+ 
+-<<<<<<< HEAD
+ BattleAnimationMap::BattleAnimationMap(const lcf::rpg::Animation& anim, Game_Character& target, bool global, bool synced, bool multiplayer) :
+-	BattleAnimation(anim, false, -1, synced, multiplayer), target(target), global(global)
+-=======
+-BattleAnimationMap::BattleAnimationMap(const lcf::rpg::Animation& anim, Game_Character& target, bool global) :
+-	BattleAnimation(anim), target(&target), global(global)
+->>>>>>> 7d0c9a8bf
++	BattleAnimation(anim, false, -1, synced, multiplayer), target(&target), global(global)
+ {
+ }
+ 
+diff --git a/src/battle_animation.h b/src/battle_animation.h
+index 616c19863..78d7e1631 100644
+--- a/src/battle_animation.h
++++ b/src/battle_animation.h
+@@ -115,12 +115,8 @@ protected:
+ // For playing animations on the map.
+ class BattleAnimationMap : public BattleAnimation {
+ public:
+-<<<<<<< HEAD
+ 	BattleAnimationMap(const lcf::rpg::Animation& anim, Game_Character& target, bool global, bool synced = false, bool multiplayer = false);
+-=======
+-	BattleAnimationMap(const lcf::rpg::Animation& anim, Game_Character& target, bool global);
+ 	void SetTarget(Game_Character& target);
+->>>>>>> 7d0c9a8bf
+ 	void Draw(Bitmap& dst) override;
+ protected:
+ 	void FlashTargets(int r, int g, int b, int p) override;
+diff --git a/src/game_actor.cpp b/src/game_actor.cpp
+index 99de87d03..a1f908707 100644
+--- a/src/game_actor.cpp
++++ b/src/game_actor.cpp
+@@ -34,7 +34,7 @@
+ #include "attribute.h"
+ #include "rand.h"
+ #include "algo.h"
+-<<<<<<< HEAD
++#include "game_message_terms.h"
+ #include "multiplayer/game_multiplayer.h"
+ 
+ #if defined(_WIN32)
+@@ -43,9 +43,6 @@
+ 	#undef GetClassName
+ #endif
+ #endif
+-=======
+-#include "game_message_terms.h"
+->>>>>>> 7d0c9a8bf
+ 
+ constexpr int max_level_2k = 50;
+ constexpr int max_level_2k3 = 99;
+diff --git a/src/game_character.cpp b/src/game_character.cpp
+index 4f7a66f9c..858ea9b94 100644
+--- a/src/game_character.cpp
++++ b/src/game_character.cpp
+@@ -42,10 +42,6 @@ Game_Character::Game_Character(Type type, lcf::rpg::SaveMapEventBase* d) :
+ {
+ }
+ 
+-<<<<<<< HEAD
+-Game_Character::~Game_Character() {
+-}
+-
+ void Game_Character::SetFacing(int new_facing) {
+ 	if (GetType() == Player && new_facing != data()->facing && !IsMoving()) {
+ 		GMI().MainPlayerFacingChanged(new_facing);
+@@ -68,10 +64,7 @@ void Game_Character::SetSpriteGraphic(std::string sprite_name, int index) {
+ 	data()->sprite_id = index;
+ }
+ 
+-void Game_Character::SanitizeData(StringView name) {
+-=======
+ void Game_Character::SanitizeData(std::string_view name) {
+->>>>>>> 7d0c9a8bf
+ 	SanitizeMoveRoute(name, data()->move_route, data()->move_route_index, "move_route_index");
+ }
+ 
+diff --git a/src/game_interpreter.cpp b/src/game_interpreter.cpp
+index dfd6f7580..be932a5a0 100644
+--- a/src/game_interpreter.cpp
++++ b/src/game_interpreter.cpp
+@@ -45,11 +45,8 @@
+ #include "game_screen.h"
+ #include "game_interpreter_control_variables.h"
+ #include "game_windows.h"
+-<<<<<<< HEAD
+-#include "multiplayer/game_multiplayer.h"
+-=======
+ #include "json_helper.h"
+->>>>>>> 7d0c9a8bf
++#include "multiplayer/game_multiplayer.h"
+ #include "maniac_patch.h"
+ #include "spriteset_map.h"
+ #include "sprite_character.h"
+@@ -3052,13 +3049,9 @@ bool Game_Interpreter::CommandMovePicture(lcf::rpg::EventCommand const& com) { /
+ 		}
+ 	}
+ 
+-<<<<<<< HEAD
+ 	GMI().PictureMoved(pic_id, params);
+ 
+-	if (wait)
+-=======
+ 	if (options.wait)
+->>>>>>> 7d0c9a8bf
+ 		SetupWait(params.duration);
+ 
+ 	return true;
+diff --git a/src/game_player.cpp b/src/game_player.cpp
+index be9d2c862..7248ab281 100644
+--- a/src/game_player.cpp
++++ b/src/game_player.cpp
+@@ -446,15 +446,11 @@ bool Game_Player::CheckEventTriggerHere(TriggerSet triggers, bool triggered_by_d
+ 				&& trigger >= 0
+ 				&& triggers[trigger]) {
+ 			SetEncounterCalling(false);
+-<<<<<<< HEAD
+-			const auto triggered = ev.ScheduleForegroundExecution(triggered_by_decision_key, true);
++			const auto triggered = ev.ScheduleForegroundExecution(triggered_by_decision_key, face_player);
+ 			result |= triggered;
+ 			if (triggered) {
+ 				GMI().MainPlayerTriggeredEvent(ev.GetId(), triggered_by_decision_key);
+ 			}
+-=======
+-			result |= ev.ScheduleForegroundExecution(triggered_by_decision_key, face_player);
+->>>>>>> 7d0c9a8bf
+ 		}
+ 	}
+ 	return result;
+@@ -475,15 +471,11 @@ bool Game_Player::CheckEventTriggerThere(TriggerSet triggers, int x, int y, bool
+ 				&& trigger >= 0
+ 				&& triggers[trigger]) {
+ 			SetEncounterCalling(false);
+-<<<<<<< HEAD
+-			const auto triggered = ev.ScheduleForegroundExecution(triggered_by_decision_key, true);
++			const auto triggered = ev.ScheduleForegroundExecution(triggered_by_decision_key, face_player);
+ 			result |= triggered;
+ 			if (triggered) {
+ 				GMI().MainPlayerTriggeredEvent(ev.GetId(), triggered_by_decision_key);
+ 			}
+-=======
+-			result |= ev.ScheduleForegroundExecution(triggered_by_decision_key, face_player);
+->>>>>>> 7d0c9a8bf
+ 		}
+ 	}
+ 	return result;
+diff --git a/src/input_buttons.h b/src/input_buttons.h
+index 6122ba063..e174f4503 100644
+--- a/src/input_buttons.h
++++ b/src/input_buttons.h
+@@ -146,7 +146,6 @@ namespace Input {
+ 		"FAST_FORWARD_A",
+ 		"FAST_FORWARD_B",
+ 		"TOGGLE_FULLSCREEN",
+-<<<<<<< HEAD
+ 		"TOGGLE_ZOOM",
+ 
+ 		"TOGGLE_MUTE",
+@@ -162,13 +161,8 @@ namespace Input {
+ 		"KEY_C",
+ 		"KEY_V",
+ 		"KEY_CTRL",
+-		"KEY_ESCAPE",
+-
+-		"BUTTON_COUNT");
+-=======
+-		"TOGGLE_ZOOM");
++		"KEY_ESCAPE");
+ 	static_assert(kInputButtonNames.size() == static_cast<size_t>(BUTTON_COUNT));
+->>>>>>> 7d0c9a8bf
+ 
+ 	constexpr auto kInputButtonHelp = lcf::makeEnumTags<InputButton>(
+ 		"Up Direction",
+@@ -212,7 +206,6 @@ namespace Input {
+ 		"Run the game at x{} speed",
+ 		"Run the game at x{} speed",
+ 		"Toggle Fullscreen mode",
+-<<<<<<< HEAD
+ 		"Toggle Window Zoom level",
+ 
+ 		"Toggle mute",
+@@ -228,13 +221,8 @@ namespace Input {
+ 		"C Key",
+ 		"V Key",
+ 		"Ctrl Key",
+-		"Escape Key",
+-
+-		"Total Button Count");
+-=======
+-		"Toggle Window Zoom level");
++		"Escape Key");
+ 	static_assert(kInputButtonHelp.size() == static_cast<size_t>(BUTTON_COUNT));
+->>>>>>> 7d0c9a8bf
+ 
+ 	/**
+ 	 * Return true if the given button is a system button.
+diff --git a/src/platform/emscripten/interface.cpp b/src/platform/emscripten/interface.cpp
+index 3170c81cd..15fc5edf7 100644
+--- a/src/platform/emscripten/interface.cpp
++++ b/src/platform/emscripten/interface.cpp
+@@ -231,12 +231,9 @@ EMSCRIPTEN_BINDINGS(player_interface) {
+ #endif
+ 		.class_function("refreshScene", &Emscripten_Interface::RefreshScene)
+ 		.class_function("takeScreenshot", &Emscripten_Interface::TakeScreenshot)
+-<<<<<<< HEAD
++		.class_function("resetCanvas", &Emscripten_Interface::ResetCanvas)
+ 		// IME & Clipboard support
+ 		.class_function("updateTextInputBuffer", &Emscripten_Interface::UpdateTextInputBuffer)
+-=======
+-		.class_function("resetCanvas", &Emscripten_Interface::ResetCanvas)
+->>>>>>> 7d0c9a8bf
+ 	;
+ 
+ 	emscripten::class_<Emscripten_Interface_Private>("api_private")
+diff --git a/src/platform/emscripten/interface.h b/src/platform/emscripten/interface.h
+index 5393f6442..d79a961bf 100644
+--- a/src/platform/emscripten/interface.h
++++ b/src/platform/emscripten/interface.h
+@@ -29,7 +29,7 @@ public:
+     static void RefreshScene();
+ 	static void TakeScreenshot(bool is_auto_screenshot = false);
+ 	static void Reset();
+-<<<<<<< HEAD
++	static bool ResetCanvas();
+ 
+ 	// IME & Clipboard support
+ 	static void StartTextInput();
+@@ -38,9 +38,6 @@ public:
+ 	static void UpdateTextInputBuffer(std::string text);
+ 	static std::string GetClipboardText();
+ 	static void SetClipboardText(std::string_view text);
+-=======
+-	static bool ResetCanvas();
+->>>>>>> 7d0c9a8bf
+ };
+ 
+ class Emscripten_Interface_Private {
+diff --git a/src/platform/sdl/sdl2_ui.cpp b/src/platform/sdl/sdl2_ui.cpp
+index 3b6daac4c..656a00aab 100644
+--- a/src/platform/sdl/sdl2_ui.cpp
++++ b/src/platform/sdl/sdl2_ui.cpp
+@@ -514,6 +514,8 @@ void Sdl2Ui::ToggleFullscreen() {
+ 	} else {
+ 		current_display_mode.flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
+ 		SDL_GetWindowPosition(sdl_window, &window_mode_metrics.x, &window_mode_metrics.y);
++		window_mode_metrics.width = window.width;
++		window_mode_metrics.height = window.height;
+ 	}
+ 	EndDisplayModeChange();
+ }
+@@ -641,13 +643,6 @@ void Sdl2Ui::UpdateDisplay() {
+ 		// Based on SDL2 function UpdateLogicalSize
+ 		window.size_changed = false;
+ 
+-<<<<<<< HEAD
+-		window_mode_metrics.width = window.width;
+-		window_mode_metrics.height = window.height;
+-
+-		float width_float = static_cast<float>(window.width);
+-		float height_float = static_cast<float>(window.height);
+-=======
+ 		int win_width = window.width * vcfg.screen_scale.Get() / 100.0;
+ 		int win_height = window.height * vcfg.screen_scale.Get() / 100.0;
+ 
+@@ -656,7 +651,6 @@ void Sdl2Ui::UpdateDisplay() {
+ 
+ 		float width_float = static_cast<float>(win_width);
+ 		float height_float = static_cast<float>(win_height);
+->>>>>>> 7d0c9a8bf
+ 
+ 		float want_aspect = (float)main_surface->width() / main_surface->height();
+ 		float real_aspect = width_float / height_float;
+diff --git a/src/player.cpp b/src/player.cpp
+index 7f247fe28..f6d36faae 100644
+--- a/src/player.cpp
++++ b/src/player.cpp
+@@ -16,12 +16,9 @@
+  */
+ 
+ // Headers
+-<<<<<<< HEAD
+ 
+ #include <csignal>
+ 
+-=======
+->>>>>>> 7d0c9a8bf
+ #include <algorithm>
+ #include <cstring>
+ #include <cstdlib>
+@@ -368,19 +365,11 @@ void Player::UpdateInput() {
+ 		Audio().ToggleMute();
+ 	}
+ 	float speed = 1.0;
+-<<<<<<< HEAD
+ 	if (CUI().IsCheating() && Input::IsSystemPressed(Input::FAST_FORWARD_A)) {
+-		speed = speed_modifier_a;
+-	}
+-	if (CUI().IsCheating() && Input::IsSystemPressed(Input::FAST_FORWARD_B)) {
+-		speed = speed_modifier_b;
+-=======
+-	if (Input::IsSystemPressed(Input::FAST_FORWARD_A)) {
+ 		speed = Input::GetInputSource()->GetConfig().speed_modifier_a.Get();
+ 	}
+-	if (Input::IsSystemPressed(Input::FAST_FORWARD_B)) {
++	if (CUI().IsCheating() && Input::IsSystemPressed(Input::FAST_FORWARD_B)) {
+ 		speed = Input::GetInputSource()->GetConfig().speed_modifier_b.Get();
+->>>>>>> 7d0c9a8bf
+ 	}
+ 	Game_Clock::SetGameSpeedFactor(speed);
+ 
+@@ -440,13 +429,9 @@ void Player::Update(bool update_scene) {
+ 		Scene::instance->Update();
+ 	}
+ 
+-<<<<<<< HEAD
+ 	CUI().Update();
+ 
+-#ifdef __ANDROID__
+-=======
+ #if defined(__ANDROID__) && !defined(USE_LIBRETRO)
+->>>>>>> 7d0c9a8bf
+ 	EpAndroid::invoke();
+ #endif
+ }
+@@ -921,12 +906,11 @@ void Player::CreateGameObjects() {
+ 		Main_Data::game_ineluki->ExecuteScriptList(FileFinder::Game().FindFile("autorun.script"));
+ 	}
+ 
+-<<<<<<< HEAD
+-	GMI().GameLoaded();
+-=======
+ 	if (Player::IsPatchDestiny()) {
+ 		Main_Data::game_destiny->Load();
+ 	}
++
++	GMI().GameLoaded();
+ }
+ 
+ void Player::UpdateTitle(std::string new_game_title) {
+@@ -949,7 +933,6 @@ void Player::UpdateTitle(std::string new_game_title) {
+ 	}
+ 	title << GAME_TITLE;
+ 	DisplayUi->SetTitle(title.str());
+->>>>>>> 7d0c9a8bf
+ }
+ 
+ bool Player::ChangeResolution(int width, int height) {

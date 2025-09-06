@@ -22,6 +22,7 @@
 #include <deque>
 #include <memory>
 #include <map>
+#include <cstdint>
 
 struct Game_PlayerOther;
 struct Sprite_Character;

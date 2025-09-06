@@ -1059,7 +1059,7 @@ if(PLAYER_MULTIPLAYER)
 			"${LIBSODIUM_CMAKE_PATH}")
 		execute_process(COMMAND ${GIT_EXECUTABLE} clone "--depth=1"
 			"-c" "advice.detachedHead=false" "--branch"
-			"1.0.18"
+			"1.0.20-RELEASE"
 			"https://github.com/jedisct1/libsodium"
 			"${LIBSODIUM_SOURCES}")
 	endif()
