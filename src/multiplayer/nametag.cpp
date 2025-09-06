@@ -78,8 +78,8 @@ void NameTag::Draw(Bitmap& dst) {
 	}
 }
 
-void NameTag::SetNickname(StringView name) {
-	nickname = ToString(name);
+void NameTag::SetNickname(std::string_view name) {
+	nickname = name;
 
 	std::u32string nick_unicode = Utils::DecodeUTF32(nickname);
 
@@ -94,8 +94,8 @@ void NameTag::SetNickname(StringView name) {
 	dirty = true;
 };
 
-void NameTag::SetSystemGraphic(StringView sys_name) {
-	this->sys_name = ToString(sys_name);
+void NameTag::SetSystemGraphic(std::string_view sys_name) {
+	this->sys_name = sys_name;
 	sys_graphic = Cache::System(sys_name);
 	dirty = true;
 }

@@ -78,7 +78,7 @@ public:
 	void MainPlayerChangedSpriteHidden(bool hidden);
 	void MainPlayerTeleported(int map_id, int x, int y);
 	void MainPlayerTriggeredEvent(int event_id, bool action);
-	void SystemGraphicChanged(StringView sys);
+	void SystemGraphicChanged(std::string_view sys);
 	void SePlayed(const lcf::rpg::Sound& sound);
 	void SwitchSet(int switch_id, int value);
 	void VariableSet(int var_id, int value);

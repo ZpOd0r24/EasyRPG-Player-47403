@@ -53,9 +53,9 @@ function parseArgs () {
   const items = window.location.search.substr(1).split("&");
   let result = [];
 
-  // Store saves in subdirectory `Save`
+  // Store saves in subdirectory `/Save`
   result.push("--save-path");
-  result.push("Save");
+  result.push("/Save");
 
   for (let i = 0; i < items.length; i++) {
     const tmp = items[i].split("=");
@@ -91,8 +91,8 @@ function parseArgs () {
 
 function onPreRun () {
   // Retrieve save directory from persistent storage before using it
-  FS.mkdir("Save");
-  FS.mount(Module.saveFs, {}, 'Save');
+  FS.mkdir("/Save");
+  FS.mount(Module.saveFs || IDBFS, {}, '/Save');
 
   // For preserving the configuration. Shared across website
   FS.mkdir("/home/web_user/.config");

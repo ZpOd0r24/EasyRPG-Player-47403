@@ -62,7 +62,7 @@ void DebugTextOverlay::UpdateItem(const std::string& name, const std::string& de
 	Game_Message::WordWrap(
 		debugtext,
 		Player::screen_width,
-		[&](StringView line) {
+		[&](std::string_view line) {
 			Rect rect_tmp = Text::GetSize(*Font::DefaultBitmapFont(), line);
 			if (rect_tmp.width > item.rect.width) {
 				item.rect.width = rect_tmp.width;

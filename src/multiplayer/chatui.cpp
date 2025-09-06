@@ -221,7 +221,7 @@ class DrawableChatLog : public Drawable {
 			int8_t color;
 		};
 		using GlyphLine = std::vector<Glyph>;
-		auto ExtractGlyphs = [](StringView str, int8_t color, GlyphLine& line, unsigned int& width) {
+		auto ExtractGlyphs = [](std::string_view str, int8_t color, GlyphLine& line, unsigned int& width) {
 			const auto* iter = str.data();
 			const auto* end = str.data() + str.size();
 			while (iter != end) {

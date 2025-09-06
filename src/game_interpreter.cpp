@@ -5778,7 +5778,7 @@ int Game_Interpreter::ManiacBitmask(int value, int mask) const {
 }
 
 namespace {
-	lcf::rpg::SaveEventExecState const& empty_state = {};
+	lcf::rpg::SaveEventExecState const empty_state = {};
 }
 
 

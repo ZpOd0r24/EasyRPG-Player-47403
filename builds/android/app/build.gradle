@@ -65,6 +65,11 @@ android {
             }
         }
     }
+    androidComponents {
+        onVariants(selector().withBuildType("debug")) {
+            packaging.jniLibs.keepDebugSymbols.add("**/*.so")
+        }
+    }
 }
 
 allprojects {

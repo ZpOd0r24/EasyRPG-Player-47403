@@ -345,7 +345,7 @@ PlayerData GetPlayerData() {
 	d.facing = player->GetFacing();
 	d.transparency = player->GetTransparency();
 	d.hidden = player->IsSpriteHidden();
-	d.system_name = ToString(Main_Data::game_system->GetSystemName());
+	d.system_name = std::string(Main_Data::game_system->GetSystemName());
 	return d;
 }
 
@@ -907,7 +907,7 @@ std::string Game_Multiplayer::GetChatName() {
 }
 
 void Game_Multiplayer::SendChatMessage(int visibility, std::string message, int crypt_key_hash) {
-	auto p = ChatPacket(visibility, message, ToString(Main_Data::game_system->GetSystemName()));
+	auto p = ChatPacket(visibility, message, std::string(Main_Data::game_system->GetSystemName()));
 	p.crypt_key_hash = crypt_key_hash;
 	p.name = cfg.client_chat_name.Get() != "" ? cfg.client_chat_name.Get() : "<unknown>";
 	p.room_id = room_id;
@@ -1055,9 +1055,9 @@ void Game_Multiplayer::MainPlayerTeleported(int map_id, int x, int y) {
 void Game_Multiplayer::MainPlayerTriggeredEvent(int event_id, bool action) {
 }
 
-void Game_Multiplayer::SystemGraphicChanged(StringView sys) {
+void Game_Multiplayer::SystemGraphicChanged(std::string_view sys) {
 	CUI().Refresh();
-	connection.SendPacketAsync<SystemPacket>(ToString(sys));
+	connection.SendPacketAsync<SystemPacket>(std::string(sys));
 }
 
 void Game_Multiplayer::SePlayed(const lcf::rpg::Sound& sound) {
