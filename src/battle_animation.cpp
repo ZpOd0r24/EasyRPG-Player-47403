@@ -45,7 +45,7 @@ BattleAnimation::BattleAnimation(const lcf::rpg::Animation& anim, bool only_soun
 
 	SetZ(Priority_BattleAnimation);
 
-	StringView name = animation.animation_name;
+	std::string_view name = animation.animation_name;
 	BitmapRef graphic;
 
 	if (name.empty()) return;
@@ -110,7 +110,7 @@ void BattleAnimation::DrawAt(Bitmap& dst, int x, int y) {
 			continue;
 		}
 
-		SetX(cell.x + x);
+		SetX(invert ? x - cell.x : cell.x + x);
 		SetY(cell.y + y);
 		int sx = cell.cell_id % 5;
 		int sy = cell.cell_id / 5;
@@ -236,8 +236,12 @@ static int CalculateOffset(int pos, int target_height) {
 /////////
 
 BattleAnimationMap::BattleAnimationMap(const lcf::rpg::Animation& anim, Game_Character& target, bool global, bool synced, bool multiplayer) :
-	BattleAnimation(anim, false, -1, synced, multiplayer), target(target), global(global)
+	BattleAnimation(anim, false, -1, synced, multiplayer), target(&target), global(global)
 {
+}
+
+void BattleAnimationMap::SetTarget(Game_Character& target) {
+	this->target = &target;
 }
 
 void BattleAnimationMap::Draw(Bitmap& dst) {
@@ -269,8 +273,8 @@ void BattleAnimationMap::DrawSingle(Bitmap& dst) {
 		return;
 	}
 	const int character_height = 24;
-	int x_off = target.GetScreenX();
-	int y_off = target.GetScreenY(false);
+	int x_off = target->GetScreenX();
+	int y_off = target->GetScreenY(false);
 	if (Scene::instance->type == Scene::Map) {
 		x_off += static_cast<Scene_Map*>(Scene::instance.get())->spriteset->GetRenderOx();
 		y_off += static_cast<Scene_Map*>(Scene::instance.get())->spriteset->GetRenderOy();
@@ -282,7 +286,7 @@ void BattleAnimationMap::DrawSingle(Bitmap& dst) {
 }
 
 void BattleAnimationMap::FlashTargets(int r, int g, int b, int p) {
-	target.Flash(r, g, b, p, 0);
+	target->Flash(r, g, b, p, 0);
 }
 
 void BattleAnimationMap::ShakeTargets(int /* str */, int /* spd */, int /* time */) {

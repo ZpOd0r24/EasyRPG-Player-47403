@@ -5,19 +5,24 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MenuItem;
 import android.view.MotionEvent;
+import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowInsets;
 import android.view.WindowManager;
 
+import androidx.annotation.NonNull;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 
 import com.google.android.material.navigation.NavigationView;
 
+import org.easyrpg.player.BaseActivity;
 import org.easyrpg.player.Helper;
 import org.easyrpg.player.R;
 import org.easyrpg.player.settings.SettingsManager;
@@ -25,7 +30,7 @@ import org.easyrpg.player.settings.SettingsManager;
 import java.util.LinkedList;
 import java.util.List;
 
-public class ButtonMappingActivity extends Activity implements NavigationView.OnNavigationItemSelectedListener {
+public class ButtonMappingActivity extends BaseActivity implements NavigationView.OnNavigationItemSelectedListener {
     private DrawerLayout drawer;
     private ViewGroup layoutManager;
     private List<VirtualButton> buttonList;
@@ -42,6 +47,8 @@ public class ButtonMappingActivity extends Activity implements NavigationView.On
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.button_mapping_activity);
+
+        SettingsManager.init(getApplicationContext());
 
         // Menu configuration
         this.drawer = findViewById(R.id.drawer_layout);
@@ -76,9 +83,30 @@ public class ButtonMappingActivity extends Activity implements NavigationView.On
                 vb = new MenuButton(this, b.getPosX(), b.getPosY(), b.getSize());
             }
             buttonList.add(vb);
+        }
 
+        if (Build.VERSION.SDK_INT >= 35) {
+            getWindow().getDecorView().setOnApplyWindowInsetsListener(new View.OnApplyWindowInsetsListener() {
+                @NonNull
+                @Override
+                public WindowInsets onApplyWindowInsets(@NonNull View view, @NonNull WindowInsets insets) {
+                    drawButtons();
+                    return insets;
+                }
+            });
+        } else {
             drawButtons();
         }
+
+        onBackPressedCallback.setEnabled(true);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        // Retrieve User's preferences
+        SettingsManager.init(getApplicationContext());
     }
 
     @Override
@@ -122,8 +150,7 @@ public class ButtonMappingActivity extends Activity implements NavigationView.On
         return true;
     }
 
-    @Override
-    public void onBackPressed() {
+    public void backPressed() {
         openOrCloseMenu();
     }
 

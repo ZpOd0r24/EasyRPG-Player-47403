@@ -38,7 +38,9 @@
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
-        android:theme="@style/AppTheme">
+        android:theme="@style/AppTheme"
+        android:enableOnBackInvokedCallback="true"
+        >
 
         <!-- Setting SDL hints from AndroidManifest.xml: -->
         <meta-data android:name="SDL_ENV.SDL_ACCELEROMETER_AS_JOYSTICK" android:value="0" />
@@ -72,7 +74,8 @@
         <!-- Player's Activity -->
         <activity
             android:name=".player.EasyRpgPlayerActivity"
-            android:configChanges="orientation|screenSize" />
+            android:configChanges="orientation|screenSize"
+            android:theme="@style/AppThemePlayerActivity"/>
         <!-- Settings' Activity -->
         <activity
             android:name=".settings.SettingsMainActivity"
@@ -107,7 +110,19 @@
         </activity>
         <activity
             android:name=".button_mapping.ButtonMappingActivity"
+            android:theme="@style/AppTheme.NoActionBar"
             android:configChanges="orientation|screenSize" />
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
     </application>
 
 </manifest>

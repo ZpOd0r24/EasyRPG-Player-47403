@@ -24,6 +24,7 @@
 
 #include "system.h"
 #include "async_handler.h"
+#include "baseui.h"
 #include "filefinder.h"
 #include "filesystem_stream.h"
 #include "player.h"
@@ -72,12 +73,17 @@ void Emscripten_Interface::RefreshScene() {
 	Scene::instance->Refresh();
 }
 
-void Emscripten_Interface::TakeScreenshot() {
+void Emscripten_Interface::TakeScreenshot(bool is_auto_screenshot) {
 	static int index = 0;
 	std::ostringstream os;
 	Output::TakeScreenshot(os);
 	std::string screenshot = os.str();
-	std::string filename = "screenshot_" + std::to_string(index++) + ".png";
+	std::string filename = Output::GetScreenshotName(is_auto_screenshot);
+	if (!Player::player_config.screenshot_timestamp.Get()) {
+		filename += "_" + std::to_string(index++) + ".png";
+	} else {
+		filename += ".png";
+	}
 	EM_ASM_ARGS({
 		Module.api_private.download_js($0, $1, $2);
 	}, screenshot.data(), screenshot.size(), filename.c_str());
@@ -161,7 +167,7 @@ bool Emscripten_Interface_Private::UploadSoundfontStep2(std::string filename, in
 	std::string name = std::get<1>(FileFinder::GetPathAndFilename(filename));
 
 	// TODO: No good way to sanitize this, would require launching an entire, second fluidsynth session
-	if (!StringView(name).ends_with(".sf2")) {
+	if (!EndsWith(name, ".sf2")) {
 		Output::Warning("Selected file is not a valid soundfont");
 		return false;
 	}
@@ -205,6 +211,12 @@ bool Emscripten_Interface_Private::UploadFontStep2(std::string filename, int buf
 	return true;
 }
 
+bool Emscripten_Interface::ResetCanvas() {
+	DisplayUi.reset();
+	DisplayUi = BaseUi::CreateUi(Player::screen_width, Player::screen_height, Player::ParseCommandLine());
+	return DisplayUi != nullptr;
+}
+
 // Binding code
 EMSCRIPTEN_BINDINGS(player_interface) {
 	emscripten::class_<Emscripten_Interface>("api")
@@ -219,6 +231,7 @@ EMSCRIPTEN_BINDINGS(player_interface) {
 #endif
 		.class_function("refreshScene", &Emscripten_Interface::RefreshScene)
 		.class_function("takeScreenshot", &Emscripten_Interface::TakeScreenshot)
+		.class_function("resetCanvas", &Emscripten_Interface::ResetCanvas)
 		// IME & Clipboard support
 		.class_function("updateTextInputBuffer", &Emscripten_Interface::UpdateTextInputBuffer)
 	;

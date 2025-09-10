@@ -24,6 +24,7 @@
 #include "game_character.h"
 #include <lcf/rpg/event.h>
 #include <lcf/rpg/savemapevent.h>
+#include "game_interpreter_debug.h"
 #include "game_interpreter_map.h"
 #include "async_op.h"
 
@@ -38,6 +39,11 @@ public:
 	 * Constructor.
 	 */
 	Game_Event(int map_id, const lcf::rpg::Event* event);
+
+	/** @param ev Event referenced */
+	void SetUnderlyingEvent(const lcf::rpg::Event* ev) {
+		event = ev;
+	}
 
 	/** Load from saved game */
 	void SetSaveData(lcf::rpg::SaveMapEvent save);
@@ -72,7 +78,7 @@ public:
 	 *
 	 * @return event name.
 	 */
-	StringView GetName() const;
+	std::string_view GetName() const;
 
 	/** Clears waiting_execution flag */
 	void ClearWaitingForegroundExecution();
@@ -213,7 +219,7 @@ private:
 	const lcf::rpg::EventPage* page = nullptr;
 	std::unique_ptr<Game_Interpreter_Map> interpreter;
 
-	friend class Scene_Debug;
+	friend class Game_Interpreter_Inspector;
 };
 
 inline int Game_Event::GetNumPages() const {
